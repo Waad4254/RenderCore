@@ -481,5 +481,15 @@
             "vertex": "custom/jumpFloodingLayers.vert",
             "fragment": "custom/jumpFloodingLayersFinal.frag"
         }
+    },
+
+    "custom_ZSplines": {
+        "description": "ZSplines shaders",
+        "shaders": {
+            "vertex": "custom/ZSplines/ZSplines.vert",
+            "fragment": "custom/ZSplines/ZSplines.frag"
+        }
     }
+
+    
 }

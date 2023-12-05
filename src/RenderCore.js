@@ -116,6 +116,7 @@ export {GeoidSphere} from './objects/GeoidSphere.js';
 export {IcoSphere} from './objects/IcoSphere.js';
 export {Group} from './objects/Group.js';
 export {Line} from './objects/Line.js';
+export {ZSplines} from './objects/ZSplines.js';
 export {Quad} from './objects/Quad.js';
 export {TerrainPlane} from './objects/TerrainPlane.js';
 export {Volume} from './objects/Volume.js';
