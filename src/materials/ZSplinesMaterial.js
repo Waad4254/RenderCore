@@ -11,7 +11,7 @@ export class ZSplinesMaterial extends CustomShaderMaterial {
 		this._attributes = attributes;
 
 		this._emissive = new Color(Math.random() * 0x000000);
-		this._color = new Color(Math.random() * 0xffffff);
+		this._color = new Color(0xffc2ce);
     }
     
 	set emissive(val) {

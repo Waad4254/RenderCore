@@ -49,18 +49,11 @@ uniform int numSubSegments;
 uniform float width;
 
 
-vec3 getPositionOnCurve(int iID)
+vec3 getPositionOnCurveT(float t, int iID)
 {
-    int vID = gl_VertexID % 2; // if 0 then left, 1 then right
-
-    if((iID + vID) >= (numSegments * numSubSegments)- 1)
-      vID = 0;
-
-    int currentSegment = (iID + vID)  / numSubSegments;
-    int currentSubSegment = (iID +vID) % numSubSegments;
+    int currentSegment = iID;
     ivec2 tc  = ivec2(currentSegment, 0.0);
 
-    float t = (1.0/ float(numSubSegments)) * float(currentSubSegment);
     float t2 = t*t, t3 = t2*t;
 
     vec4  coefficientsX = texelFetch(material.instanceData0, tc * ivec2(3), 0);
@@ -83,22 +76,27 @@ void main() {
 
         int iID = gl_InstanceID;
         int vID = gl_VertexID;
-        int currentSegment = (iID + vID)  / numSubSegments;
+        int currentSegment = iID;
 
         //Getting positions
-        vec3 curr = getPositionOnCurve(iID);
+        vec3 curr = getPositionOnCurveT(VPos.x, iID);
         vec3 pre; 
         vec3 next;
 
-        if(iID == 0)
+        if (iID == 0 && VPos.x == 0.0)
             pre = curr;
-        else
-            pre = getPositionOnCurve(iID - 1);
+        else if (iID != 0 && VPos.x == 0.0)
+            pre = getPositionOnCurveT(0.9, iID  - 1);
+        else 
+            pre = getPositionOnCurveT(VPos.x - 0.1, iID);
 
-        if(iID == ( (numSegments * numSubSegments)- 1))
+
+        if (iID == numSegments && VPos.x == 1.0)
             next = curr;
-        else
-            next = getPositionOnCurve(iID + 1);
+        else if (iID != numSegments && VPos.x == 1.0)
+            next = getPositionOnCurveT(0.1, iID + 1);
+        else 
+            next = getPositionOnCurveT(VPos.x + 0.1, iID);
 
 
         //position
@@ -113,7 +111,7 @@ void main() {
         vec3 normal_viewspace = normalize(cross(AB_tangent_viewspace.xyz, curr_viewspace.xyz));
 
         float deltaOffset = 1.0f;
-        if (vID == 2 || vID == 3)
+        if (vID % 2 != 0)
            deltaOffset = -1.0f;
 
         //Width 
@@ -121,7 +119,7 @@ void main() {
 
         //delta
         vec3 directionToMove_viewpsace = normal_viewspace * deltaOffset;
-        float distanceToMove_viewspace = widthT /2.0;
+        float distanceToMove_viewspace = (width) /2.0;
 
         vec4 delta_viewspace = vec4(directionToMove_viewpsace * distanceToMove_viewspace, 0.0);
         vec4 deltaVPos_viewspace = curr_viewspace + delta_viewspace;

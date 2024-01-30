@@ -45,15 +45,19 @@ struct Material {
     vec3 emissive;
     vec3 diffuse;
     
-    sampler2D instanceData0;  // functionCoefficients_X
-    sampler2D instanceData1;  // functionCoefficients_Y
-    sampler2D instanceData2;  // functionCoefficients_Z
+    sampler2D instanceData0;  // functionCoefficients_XYZ
+    sampler2D instanceData1;  // Colors
+    sampler2D instanceData2;  // Widths
+
+
+
 };
 
 
 //UIO
 //**********************************************************************************************************************
 uniform Material material;
+
 #if (TRANSPARENT)
 uniform float alpha;
 #else
@@ -77,9 +81,9 @@ in vec3 fragVPos;
 #fi
 
 
-#if (COLORS)
+
     in vec4 fragVColor;
-#fi
+
 
 out vec4 color;
 
@@ -169,7 +173,7 @@ void main() {
 
     #if (DLIGHTS)
         #for lightIdx in 0 to NUM_DLIGHTS
-            combined += dLights[##lightIdx].color * material.diffuse;
+            combined += dLights[##lightIdx].color * (fragVColor.rgb + vec3(0.2, 0.1, 0.0));
         #end
     #fi
     #if (PLIGHTS)

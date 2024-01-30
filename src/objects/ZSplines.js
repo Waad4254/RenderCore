@@ -15,12 +15,19 @@ export class ZSplines extends Mesh {
         const material = new ZSplinesMaterial();
         const geometry = new Geometry();
 
-        const functionCoefficients_X = [];
-        const functionCoefficients_Y = [];
-        const functionCoefficients_Z = [];
+        const functionCoefficients_XYZ = [];
+        const colors = [0.412, 0.204, 0.529, 1.0,
+                        0.208, 0.631, 0.624, 1.0, 
+                        0.69, 0.357, 0.635, 1.0, 
+                        0.388, 0.539, 0.49, 1.0];
+        const widths = [0.2,  0.0, 0.0, 0.0,
+                        0.15, 0.0, 0.0, 0.0,
+                        0.1,  0.0, 0.0, 0.0,
+                        0.05, 0.0, 0.0, 0.0,];
 
         const numSegments = (points.length/6) - 1;
 
+        //console.log("numSegments", numSegments);
         material.setUniform("numSegments", numSegments);
         material.setUniform("numSubSegments", samples);
         material.setUniform("width", width);
@@ -35,25 +42,25 @@ export class ZSplines extends Mesh {
 
             const functionCoefficients = ZSplines.getCurveFunctionCoefficients(p1, p2, p3, p4);
 
-            functionCoefficients_X.push(functionCoefficients[0][0]);
-            functionCoefficients_X.push(functionCoefficients[0][1]);
-            functionCoefficients_X.push(functionCoefficients[0][2]);
-            functionCoefficients_X.push(functionCoefficients[0][3]);
+            functionCoefficients_XYZ.push(functionCoefficients[0][0]);
+            functionCoefficients_XYZ.push(functionCoefficients[0][1]);
+            functionCoefficients_XYZ.push(functionCoefficients[0][2]);
+            functionCoefficients_XYZ.push(functionCoefficients[0][3]);
 
-            functionCoefficients_Y.push(functionCoefficients[1][0]);
-            functionCoefficients_Y.push(functionCoefficients[1][1]);
-            functionCoefficients_Y.push(functionCoefficients[1][2]);
-            functionCoefficients_Y.push(functionCoefficients[1][3]);
+            functionCoefficients_XYZ.push(functionCoefficients[1][0]);
+            functionCoefficients_XYZ.push(functionCoefficients[1][1]);
+            functionCoefficients_XYZ.push(functionCoefficients[1][2]);
+            functionCoefficients_XYZ.push(functionCoefficients[1][3]);
 
-            functionCoefficients_Z.push(functionCoefficients[2][0]);
-            functionCoefficients_Z.push(functionCoefficients[2][1]);
-            functionCoefficients_Z.push(functionCoefficients[2][2]);
-            functionCoefficients_Z.push(functionCoefficients[2][3]);
+            functionCoefficients_XYZ.push(functionCoefficients[2][0]);
+            functionCoefficients_XYZ.push(functionCoefficients[2][1]);
+            functionCoefficients_XYZ.push(functionCoefficients[2][2]);
+            functionCoefficients_XYZ.push(functionCoefficients[2][3]);
 
         }
 
-        const functionCoefficients_XTexture = new Texture(
-            new Float32Array(functionCoefficients_X), 
+        const functionCoefficients_XYZTexture = new Texture(
+            new Float32Array(functionCoefficients_XYZ), 
             Texture.WRAPPING.ClampToEdgeWrapping, 
             Texture.WRAPPING.ClampToEdgeWrapping,
             Texture.FILTER.NearestFilter, 
@@ -61,14 +68,14 @@ export class ZSplines extends Mesh {
             Texture.FORMAT.RGBA32F, 
             Texture.FORMAT.RGBA, 
             Texture.TYPE.FLOAT,
-            functionCoefficients_X.length/4,
+            functionCoefficients_XYZ.length/4,
             1
         );
-        functionCoefficients_XTexture._generateMipmaps = false;
-        material.addInstanceData(functionCoefficients_XTexture);
+        functionCoefficients_XYZTexture._generateMipmaps = false;
+        material.addInstanceData(functionCoefficients_XYZTexture);
 
-        const functionCoefficients_YTexture = new Texture(
-            new Float32Array(functionCoefficients_Y), 
+        const ColorsTexture = new Texture(
+            new Float32Array(colors), 
             Texture.WRAPPING.ClampToEdgeWrapping, 
             Texture.WRAPPING.ClampToEdgeWrapping,
             Texture.FILTER.NearestFilter, 
@@ -76,14 +83,14 @@ export class ZSplines extends Mesh {
             Texture.FORMAT.RGBA32F, 
             Texture.FORMAT.RGBA, 
             Texture.TYPE.FLOAT,
-            functionCoefficients_Y.length/4,
+            colors.length/4,
             1
         );
-        functionCoefficients_YTexture._generateMipmaps = false;
-        material.addInstanceData(functionCoefficients_YTexture);
+        ColorsTexture._generateMipmaps = false;
+        material.addInstanceData(ColorsTexture);
 
-        const functionCoefficients_ZTexture = new Texture(
-            new Float32Array(functionCoefficients_Z), 
+        const WidthTexture = new Texture(
+            new Float32Array(widths), 
             Texture.WRAPPING.ClampToEdgeWrapping, 
             Texture.WRAPPING.ClampToEdgeWrapping,
             Texture.FILTER.NearestFilter, 
@@ -91,19 +98,61 @@ export class ZSplines extends Mesh {
             Texture.FORMAT.RGBA32F, 
             Texture.FORMAT.RGBA, 
             Texture.TYPE.FLOAT,
-            functionCoefficients_Z.length/4,
+            widths.length/4,
             1
         );
-        functionCoefficients_ZTexture._generateMipmaps = false;
-        material.addInstanceData(functionCoefficients_ZTexture);
+        WidthTexture._generateMipmaps = false;
+        material.addInstanceData(WidthTexture);
 
-        // Quad 4 vertices
-        const line = [0.0,0.0,0.0,
-                      0.0,0.0,0.0,
-                      0.0,0.0,0.0,
-                      0.0,0.0,0.0];
-        geometry.vertices = Float32Attribute(line, 3);
-        geometry.indices = Uint32Attribute([0, 1, 2, 2, 1, 3], 1);
+
+        const method = 1; 
+        if(method == 1)// in case of methid 2? change the target vertex shader
+        {
+            // Quad 4 vertices
+            const line = [0.0,0.0,0.0,
+            0.0,0.0,0.0,
+            0.0,0.0,0.0,
+            0.0,0.0,0.0];
+            geometry.vertices = Float32Attribute(line, 3);
+            geometry.indices = Uint32Attribute([0, 1, 2, 2, 1, 3], 1);
+        }
+        else
+        {
+            const line = [];
+            const index = [];
+            for (let x = 0; x<=samples; x++)
+            {
+                line.push(x/samples);
+                line.push(0.0);
+                line.push(0.0);
+
+                line.push(x/samples);
+                line.push(0.0);
+                line.push(0.0);
+
+            }
+
+            for (let x = 0; x<line.length/3; x+=2)
+            {
+                if(x+3 < line.length/3)
+                {
+                    index.push(x);
+                    index.push(x+1);
+                    index.push(x+2);
+                    index.push(x+2);
+                    index.push(x+1);
+                    index.push(x+3);
+                }
+                
+            }
+
+            //console.log("index",line.length/3, index);
+
+            geometry.vertices = Float32Attribute(line, 3);
+            geometry.indices = Uint32Attribute(index, 1);
+            samples = 1;
+        }
+        
         material.side = FRONT_AND_BACK_SIDE;
 
 
@@ -140,7 +189,7 @@ export class ZSplines extends Mesh {
             coefficientsMat[i][2] = P - Q - R;
             coefficientsMat[i][3] = R;
         }
-        console.log("Coefficients coefficientsMat", coefficientsMat );
+        //console.log("Coefficients coefficientsMat", coefficientsMat );
 
         return coefficientsMat;
     }
