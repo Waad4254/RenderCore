@@ -15,5 +15,7 @@
   "custom_picker_POINTS",
   "custom_text2D",
   "custom_ZText",
-  "custom_ZSplines"
+  "custom_ZSplines",
+  "custom_ZSplinesLighting"
+
 ]

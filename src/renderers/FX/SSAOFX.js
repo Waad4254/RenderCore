@@ -15,7 +15,7 @@ export class SSAOFX extends FX {
     constructor(renderer, INPUTS = {}, args = {}, OUTPUTS = {}) {
         super(renderer, INPUTS, OUTPUTS);
 
-
+ 
         this.inputs.color = this.inputs.color ? this.inputs.color : new FX.input("color_in");
         this.inputs.normal = this.inputs.normal ? this.inputs.normal : new FX.input("normal");
         this.inputs.position = this.inputs.position ? this.inputs.position : new FX.input("vertexPos");
@@ -41,7 +41,7 @@ export class SSAOFX extends FX {
                 radius: args.radius,
                 bias: args.bias,
                 magnitude: args.magnitude,
-                contrast: args.contrast,
+                contrast: args.contrast, 
                 "samples[0]": ssaoSamples,
                 "noise[0]": ssaoNoise,
                 PMat_o: [1.7886792452830194, 0, 0, 0, 0, 1.0000000000000002, 0, 0, 0, 0, -1.0000152589054787, -1, 0, 0, -0.12500095368159242, 0]
@@ -114,7 +114,7 @@ export class SSAOFX extends FX {
             },
 
             // Target
-            RenderPass.TEXTURE,
+            RenderPass.SCREEN,
 
             // Viewport
             { width: predef_width, height: predef_height },
@@ -128,8 +128,8 @@ export class SSAOFX extends FX {
         );
 
 
-        this.pushRenderPass(RenderPass_SSAO);
-        this.pushRenderPass(RenderPass_SimpleBlur);
+        renderer.pushRenderPass(RenderPass_SSAO);
+        renderer.pushRenderPass(RenderPass_SimpleBlur);
     }
 
 

@@ -517,6 +517,7 @@ export class Material {
 			this._maps.splice(index, 1);
 		}
 	}
+	
 	removeCubemap(cubemap) {
 		let index = this._cubemaps.indexOf(cubemap);
 
@@ -525,6 +526,17 @@ export class Material {
 			this.requiredProgramTemplate = null;
 
 			this._cubemaps.splice(index, 1);
+		}
+	}
+
+	updateInstanceData(index, instance) {
+		//let index = this._instanceData.indexOf(instance);
+
+		if (index > -1) {
+			// Invalidate required program template
+			this.requiredProgramTemplate = null;
+
+			this._instanceData[index] = instance;
 		}
 	}
 

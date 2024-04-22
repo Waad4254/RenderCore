@@ -56,13 +56,14 @@ function loadObjects() {
   loaderObj.load("../common/models/bunny.obj", function(obj) {
     objects = obj;
     for (let i = 0; i < obj.length; i++) {
-      obj[i].position.z = 0;
+      //obj[i].position.z = 0;
 
       let material = new RC.MeshPhongMaterial();
       obj[i].material = material;
       obj[i].position = new RC.Vector3(0.15, -0.8, 0);
 
       obj[i].geometry.drawWireframe = false;
+      console.log(obj[i]);
       scene.add(obj[i]);
     }
 
@@ -153,7 +154,7 @@ function setUpGui() {
 
   h = gui.addFolder("Light control");
   h.add(effectController, "lIntensity", 0.0, 1.0).name("Intensity");
-  h.addColor(effectController, "lColor").name("Color");
+  //h.addColor(effectController, "lColor").name("Color");
 
   h = gui.addFolder("Light direction");
   h.add(effectController, "lX", -10.0, 10.0).name("X axis");
@@ -161,7 +162,7 @@ function setUpGui() {
   h.add(effectController, "lZ", -10.0, 10.0).name("Z axis");
 
   h = gui.addFolder("Material control");
-  h.addColor(effectController, "mColor").name("Color");
+  //h.addColor(effectController, "mColor").name("Color");
   h.add(effectController, "mShininess", 1.0, 400.0, 1.0).name("Shininess");
 
   h = gui;

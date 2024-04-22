@@ -489,7 +489,14 @@
             "vertex": "custom/ZSplines/ZSplines.vert",
             "fragment": "custom/ZSplines/ZSplines.frag"
         }
+    },
+
+    "custom_ZSplinesLighting": {
+        "description": "ZSplines lighting shaders",
+        "shaders": {
+            "vertex": "custom/ZSplines/ZSplinesLightingPass.vert",
+            "fragment": "custom/ZSplines/ZSplinesLightingPass.frag"
+        }
     }
 
-    
 }

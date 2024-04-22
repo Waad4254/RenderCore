@@ -6,30 +6,20 @@ precision mediump float;
 //**********************************************************************************************************************
 
 uniform mat4 MVMat; 
+uniform mat4 VMat; 
 uniform mat4 PMat;  // Projection Matrix
+uniform mat3 NMat;  // Normal Matrix
 in mat4 MMat;
 in vec3 VPos;       // Vertex position
-
-#if (OUTLINE)
-    in vec3 VNorm;      // Vertex normal
-    uniform float offset;
-#fi
+in vec2 uv;
 
 
 out vec4 fragVColor;
-
-
-#if (PLIGHTS || SLIGHTS)
-    out vec3 fragVPos;
-#fi
-
-#if (POINTS)
-    uniform float pointSize;
-#fi
-
-#if (CLIPPING_PLANES)
-    out vec3 vViewPosition;
-#fi
+out vec3 fragVPos;
+out vec3 vNormal;
+out vec3 vBinormal;
+out vec2 fragUV;
+out float qLength;
 
 struct Material {
     vec3 emissive;
@@ -38,29 +28,27 @@ struct Material {
     sampler2D instanceData0;  // functionCoefficients_XYZ
     sampler2D instanceData1;  // Colors
     sampler2D instanceData2;  // Widths
-
-
+    sampler2D instanceData3;  // Time
+    sampler2D instanceData4;  // Radians
+    sampler2D instanceData5;  // Energy
+    sampler2D instanceData6;  // Pattern
 
 };
 uniform Material material;
 
 uniform int numSegments;
-uniform int numSubSegments;
+uniform float samples;
+uniform float limitT_min;
+uniform float limitT_max;
 uniform float width;
 
 
-vec3 getPositionOnCurve(int iID)
+
+vec3 getPositionOnCurveT(float t, int iID)
 {
-    int vID = gl_VertexID % 2; // if 0 then left, 1 then right
-
-    if((iID + vID) >= (numSegments * numSubSegments)- 1)
-      vID = 0;
-
-    int currentSegment = (iID + vID)  / numSubSegments;
-    int currentSubSegment = (iID +vID) % numSubSegments;
+    int currentSegment = iID;
     ivec2 tc  = ivec2(currentSegment, 0.0);
 
-    float t = (1.0/ float(numSubSegments)) * float(currentSubSegment);
     float t2 = t*t, t3 = t2*t;
 
     vec4  coefficientsX = texelFetch(material.instanceData0, tc * ivec2(3), 0);
@@ -79,32 +67,62 @@ vec3 getPositionOnCurve(int iID)
 //**********************************************************************************************************************
 void main() {
     // Model view position
+    vec2 uv_m = uv;
+    int iID = gl_InstanceID; // segment
+    int vID = gl_VertexID;
+    int currentSegment = iID;
+
     #if (!OUTLINE)
 
-        int iID = gl_InstanceID;
-        int vID = gl_VertexID;
-        int currentSegment = (iID + vID)  / numSubSegments;
-
         //Getting positions
-        vec3 curr = getPositionOnCurve(iID);
+        vec3 curr;
+        float currentS = VPos.x;
+
+        ivec2 tc  = ivec2(currentSegment, 0.0);
+        vec2 time = texelFetch(material.instanceData3, tc, 0).rg;
+        float begT = time.x;
+        float endT = time.y;
+
+        float T_per_S = (endT - begT)/samples;
+
+        float currentT = begT + (currentS * samples* T_per_S);
+
+        if(currentT > limitT_min && currentT < limitT_max)
+            curr = getPositionOnCurveT(VPos.x, iID);
+
         vec3 pre; 
         vec3 next;
 
-        if(iID == 0)
+        if (VPos.x == 0.0)
             pre = curr;
-        else
-            pre = getPositionOnCurve(iID - 1);
+        else 
+            pre = getPositionOnCurveT(VPos.x - 0.1, iID);
 
-        if(iID == ( (numSegments * numSubSegments)- 1))
+
+        if (VPos.x == 1.0)
             next = curr;
-        else
-            next = getPositionOnCurve(iID + 1);
+        else 
+            next = getPositionOnCurveT(VPos.x + 0.1, iID);
 
+        if(currentT >= limitT_max || currentT <= limitT_min)
+        {
+            curr = getPositionOnCurveT(0.0, iID); 
+            pre = curr;
+            next = curr;
+        }
 
         //position
         vec4 curr_viewspace = MVMat * vec4(curr, 1.0);
         vec4 prev_viewspace = MVMat * vec4(pre, 1.0);
         vec4 next_viewspace = MVMat * vec4(next, 1.0);
+
+        //distance
+        vec3 end = getPositionOnCurveT(0.9, iID);
+        float length = 0.0;
+        
+        length = sqrt(pow(curr.x - end.x, 2.0) + pow(curr.y - end.y, 2.0) + pow(curr.z - end.z, 2.0));
+
+        qLength = length;
 
         //tangent
         vec4 AB_tangent_viewspace = next_viewspace - prev_viewspace;
@@ -112,8 +130,14 @@ void main() {
         //normal
         vec3 normal_viewspace = normalize(cross(AB_tangent_viewspace.xyz, curr_viewspace.xyz));
 
+        vec3 binormal = normalize(cross(AB_tangent_viewspace.xyz, curr_viewspace.xyz));
+        vec3 normal = normalize(cross(binormal, AB_tangent_viewspace.xyz));
+
+        vNormal = normal;
+        vBinormal = binormal;
+
         float deltaOffset = 1.0f;
-        if (vID == 2 || vID == 3)
+        if (vID % 2 != 0)
            deltaOffset = -1.0f;
 
         //Width 
@@ -121,7 +145,7 @@ void main() {
 
         //delta
         vec3 directionToMove_viewpsace = normal_viewspace * deltaOffset;
-        float distanceToMove_viewspace = widthT /2.0;
+        float distanceToMove_viewspace = (widthT) /2.0;
 
         vec4 delta_viewspace = vec4(directionToMove_viewpsace * distanceToMove_viewspace, 0.0);
         vec4 deltaVPos_viewspace = curr_viewspace + delta_viewspace;
@@ -129,27 +153,24 @@ void main() {
         vec4 VPos4 = deltaVPos_viewspace;  
     #fi
 
-    #if (OUTLINE)
+    fragVPos = VPos4.xyz / VPos4.w;
 
-        vec4 VPos4 = MVMat * MMat * vec4(VPos + VNorm * offset, 1.0);
+        
+    fragUV = uv_m;
 
-    #fi
 
     // Projected position
     gl_Position = PMat * VPos4;
 
-    #if (PLIGHTS || SLIGHTS)
-        // Pass vertex position to fragment shader
-        fragVPos = vec3(VPos4) / VPos4.w;
-    #fi
-
 
         // Pass vertex color to fragment shader
-        vec4 colorT = texelFetch(material.instanceData1, ivec2(currentSegment / ((numSegments+1)/4), 0.0), 0);
+        
+        vec2 energy = texelFetch(material.instanceData5, tc, 0).rg;
+        float begE = energy.x;
+        float endE = energy.y;
+
+        vec4 colorT = texture(material.instanceData1, vec2(begE, 0.0));
+
         fragVColor = colorT;
 
-
-    #if (CLIPPING_PLANES)
-        vViewPosition = -VPos4.xyz;
-    #fi
  }

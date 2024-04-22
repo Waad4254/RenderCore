@@ -3,7 +3,7 @@ import { CustomShaderMaterial } from "../../materials/CustomShaderMaterial.js";
 import { RenderPass } from "./../RenderPass.js";
 import { FRONT_AND_BACK_SIDE } from "../../constants.js";
 import { Mesh } from "../../RenderCore.js";
-
+ 
 
 const predef_width = document.body.clientWidth;
 const predef_height = document.body.clientHeight;

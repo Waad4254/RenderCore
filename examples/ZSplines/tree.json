@@ -1,0 +1,42 @@
+[ {
+  "_typename" : "G4S_Particle",
+  "m_x_beg" : {
+    "_typename" : "ROOT::Experimental::REveVector4T<double>",
+    "fX" : -2.54571196095308,
+    "fY" : -0.28092096302583,
+    "fZ" : 3.0881387167202,
+    "fT" : 0.133826009397896
+  },
+  "m_p_beg" : {
+    "_typename" : "ROOT::Experimental::REveVector4T<double>",
+    "fX" : -7.95912169553335,
+    "fY" : -0.878294231964846,
+    "fZ" : 9.65500898611573,
+    "fT" : 12.5531643191873
+  },
+  "m_x_end" : {
+    "_typename" : "ROOT::Experimental::REveVector4T<double>",
+    "fX" : -124.282882375989,
+    "fY" : -2.93595591393289,
+    "fZ" : 149.965023613933,
+    "fT" : 6.50599853238031
+  },
+  "m_p_end" : {
+    "_typename" : "ROOT::Experimental::REveVector4T<double>",
+    "fX" : -7.97198252610799,
+    "fY" : 0.510956690659158,
+    "fZ" : 9.63047296537662,
+    "fT" : 12.522112787125
+  },
+  "m_mass" : 0.493677,
+  "m_pdg" : 321,
+  "m_charge" : 1,
+  "m_parent" : 0,
+  "m_daughters_begin" : 5349,
+  "m_daughters_end" : 5356,
+  "m_n_daughters_skipped" : 0,
+  "m_n_sub_daughters_skipped" : 0,
+  "m_g4_id" : 1,
+  "m_g4_level" : 1,
+  "m_was_tracked" : true
+}]

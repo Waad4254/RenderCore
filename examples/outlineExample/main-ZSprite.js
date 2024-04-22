@@ -631,7 +631,7 @@ const RenderPass_MainMulti = new RC.RenderPass(
         {id: "viewDir", textureConfig: RC.RenderPass.DEFAULT_RGBA16F_TEXTURE_CONFIG},
     ]
 );
-
+ 
 const outlineMaterial = new RC.CustomShaderMaterial("outline",
   { scale: 1,
     edgeColor: [0.5, 0.01, 0.25, 1.0],
