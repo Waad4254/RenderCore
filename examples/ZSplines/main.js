@@ -205,9 +205,11 @@ let lineStrip;
 let limitT = 0.0;
 let limitT_Max = 0.0;
 let limitT_Min = 0.0;
+let animationDuration = 0.1;
 let max_T = 0;
 let min_T = 100000;
 let animate = false;
+let animationSpeed = 50;
 // C:\CMS-git\RenderCore\examples\ZSplines\all-particles-Mix50.json
 fetch('./primaries-Mix500-origin.json')
     .then((response) => response.json())
@@ -362,30 +364,34 @@ fetch('./primaries-Mix500-origin.json')
         let guiController = {
             min_time : min_T,
             max_time : max_T,
+            duration : min_T,
             animation : false,
             gap: 1,
-            fill: 2
+            fill: 2,
+            speed: 50,
           };
         
         let AnimationFolder;
-        limitT_Max = max_T;
+        limitT_Max = min_T + animationDuration;
         limitT_Min = min_T;
         let gui = new dat.GUI();
         gui.add(guiController, "min_time", guiController.min_time, guiController.max_time, 0.01).name("Starting Time")
         .onChange((value) => {
-            gui.__controllers[1].min(value);
+            /*gui.__controllers[1].min(value);
             if(guiController.max_time < value)
                 {guiController.max_time = value;
                  limitT_Max = value;}
-            console.log("ON change",gui.__controllers[1]);
+            console.log("ON change",gui.__controllers[1]);*/
 
             limitT_Min = value;
+            limitT_Max = value + animationDuration;
           });
-        gui.add(guiController, "max_time", guiController.min_time, guiController.max_time, 0.01).name("Ending Time").listen()
+        gui.add(guiController, "duration", guiController.min_time, guiController.max_time, 0.01).name("Duration").listen()
         .onChange((value) => {
-            gui.__controllers[0].max(value);
+            // gui.__controllers[0].max(value);
 
-            limitT_Max = value;
+            limitT_Max = limitT_Min + value;
+            animationDuration = value;
           });
         gui.add(guiController, "animation").name("Animate")
         .onChange((value) => {
@@ -404,9 +410,13 @@ fetch('./primaries-Mix500-origin.json')
                 .onChange((value) => {
                     lineStrip.setGapSize(value);
                   });
-                AnimationFolder.add(guiController, "fill", 1, 5, 1).name("Fill")
+                AnimationFolder.add(guiController, "fill", 1, 5, 1).name("Segment")
                 .onChange((value) => {
                     lineStrip.setFillSize(value);
+                    });
+                AnimationFolder.add(guiController, "speed", 1, 100, 1).name("Speed")
+                .onChange((value) => {
+                    animationSpeed = 100 - value;
                     });
             }
           });
@@ -551,7 +561,7 @@ function renderFunction() {
         lineStrip.setTimeLimitMin(limitT_Min);
         lineStrip.setTimeLimitMax(limitT_Max);
         
-        if(count % 100 == 0 && animate)
+        if(count % (animationSpeed) == 0 && animate)
         {
             patternCount = patternCount + 0.001;
             lineStrip.setAnimationPattern(patternCount);
