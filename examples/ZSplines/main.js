@@ -211,7 +211,7 @@ let min_T = 100000;
 let animate = false;
 let animationSpeed = 50;
 // C:\CMS-git\RenderCore\examples\ZSplines\all-particles-Mix50.json
-fetch('./primaries-Mix500-origin.json')
+fetch('./all-particles-Mix50.json')
     .then((response) => response.json())
     .then(data => {
         let tracksData = [];
