@@ -10,7 +10,7 @@ import { Texture, FRONT_AND_BACK_SIDE } from '../RenderCore.js';
 
 export class ZSplines extends Mesh {
 
-    constructor(points, time, energy, samples, width, limitT_min, limitT_max) {
+    constructor(points, time, energy, samples, width, limitT_min, limitT_max, colorsPassed) {
 
 
         const material = new ZSplinesMaterial();
@@ -22,7 +22,7 @@ export class ZSplines extends Mesh {
         let fill = 2;
         let full = 1000;
 
-        while(full > 0)
+        while(full > 0) 
         {
             for(let j = 0; j< gap > 0; j++)
             {
@@ -125,7 +125,7 @@ export class ZSplines extends Mesh {
         material.addInstanceData(functionCoefficients_XYZTexture);
 
         const ColorsTexture = new Texture(
-            new Float32Array(colors),
+            new Float32Array(colorsPassed),
             Texture.WRAPPING.ClampToEdgeWrapping,
             Texture.WRAPPING.ClampToEdgeWrapping,
             Texture.FILTER.LinearFilter,
@@ -133,7 +133,7 @@ export class ZSplines extends Mesh {
             Texture.FORMAT.RGBA16F,
             Texture.FORMAT.RGBA,
             Texture.TYPE.FLOAT,
-            colors.length / 4,
+            colorsPassed.length / 4,
             1
         );
         ColorsTexture._generateMipmaps = false;
@@ -216,6 +216,21 @@ export class ZSplines extends Mesh {
         PatternTexture._generateMipmaps = false;
         material.addInstanceData(PatternTexture);
 
+        const ColorsRealTexture = new Texture(
+            new Float32Array(colors),
+            Texture.WRAPPING.ClampToEdgeWrapping,
+            Texture.WRAPPING.ClampToEdgeWrapping,
+            Texture.FILTER.LinearFilter,
+            Texture.FILTER.LinearFilter,
+            Texture.FORMAT.RGBA16F,
+            Texture.FORMAT.RGBA,
+            Texture.TYPE.FLOAT,
+            colors.length / 4,
+            1
+        );
+        ColorsRealTexture._generateMipmaps = false;
+        material.addInstanceData(ColorsRealTexture);
+
 
         const line = [];
         const index = [];
@@ -272,6 +287,7 @@ export class ZSplines extends Mesh {
         geometry.vertices = Float32Attribute(line, 3);
         geometry.indices = Uint32Attribute(index, 1);
         geometry.uv = Float32Attribute(texCoords, 2);
+        
 
         material.side = FRONT_AND_BACK_SIDE;
 
@@ -345,6 +361,10 @@ export class ZSplines extends Mesh {
 
     setAnimationPattern(intPattern) {
         this.material.setUniform("pattern", intPattern);
+    }
+
+    setColors(colors) {
+        this.material.setUniform("colors", colors);
     }
 
     setGapSize(size) {

@@ -26,21 +26,30 @@ struct Material {
     vec3 diffuse;
 
     sampler2D instanceData0;  // functionCoefficients_XYZ
-    sampler2D instanceData1;  // Colors
+    sampler2D instanceData1;  // Testing Colors
     sampler2D instanceData2;  // Widths
     sampler2D instanceData3;  // Time
     sampler2D instanceData4;  // Radians
     sampler2D instanceData5;  // Energy
     sampler2D instanceData6;  // Pattern
+    sampler2D instanceData7;  // Scene colors
+
 
 };
 uniform Material material;
+
+#if (TRANSPARENT)
+    uniform float alpha;
+#else
+    float alpha = 1.0;
+#fi
 
 uniform int numSegments;
 uniform float samples;
 uniform float limitT_min;
 uniform float limitT_max;
 uniform float width;
+uniform bool colors;
 
 
 
@@ -154,7 +163,6 @@ void main() {
     #fi
 
     fragVPos = VPos4.xyz / VPos4.w;
-
         
     fragUV = uv_m;
 
@@ -169,8 +177,12 @@ void main() {
         float begE = energy.x;
         float endE = energy.y;
 
-        vec4 colorT = texture(material.instanceData1, vec2(begE, 0.0));
+        vec4 color = vec4(0.0);
+        if(colors)
+            color = texture(material.instanceData7, vec2(begE, 0.0));
+        else 
+            color = texelFetch(material.instanceData1, tc, 0);
 
-        fragVColor = colorT;
+        fragVColor = vec4(color.rgb, alpha);
 
  }

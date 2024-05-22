@@ -16,6 +16,8 @@ struct Material {
     sampler2D instanceData4;  // Radians
     sampler2D instanceData5;  // Energy
     sampler2D instanceData6;  // Pattern
+    sampler2D instanceData7;  // Scene colors
+
 };
 
 uniform Material material;
@@ -34,6 +36,8 @@ layout (location = 1) out vec4 gNormal;
 layout (location = 2) out vec4 gNormalTheta;
 layout (location = 3) out vec4 gBinormal;
 layout (location = 4) out vec4 gColor;
+layout (location = 5) out vec4 gViewDirection;
+
 
 //MAIN
 //**********************************************************************************************************************
@@ -59,5 +63,6 @@ void main() {
     gNormalTheta = vec4(normalize(normalTheta), 0.0);
     gBinormal = vec4(normalize(vBinormal), 0.0);
     gColor = fragVColor;
+    gViewDirection = vec4(0.0);
 
 }

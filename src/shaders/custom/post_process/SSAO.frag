@@ -20,7 +20,6 @@ uniform Material material;
 uniform mat4 MVMat; // Model View Matrix
 uniform mat4 VMat;
 uniform mat4 PMat_o;  // Projection Matrix
-uniform mat4 PMat;  // Projection Matrix
 
 uniform mat3 NMat;  // Normal Matrix
 
@@ -36,8 +35,8 @@ uniform vec3[##NUM_NOISE] noise;
     in vec2 fragUV;
 #fi
 
-out vec4 color;
-//out float color;
+//out vec4 color;
+out float color;
 
 
 //MAIN
@@ -48,7 +47,6 @@ void main() {
 
         vec3 position_viewspace = texture(material.texture0, fragUV).xyz;
         vec3 normal_viewspace = texture(material.texture1, fragUV).xyz;
-
 
         //normal_viewspace = normal_viewspace * 2.0 - 1.0; //if multi
 
@@ -80,16 +78,16 @@ void main() {
 
 
             vec4 offset_viewpsace = vec4(samplePosition_viewspace.xyz, 1.0);
-            vec4 offset_clipspace = PMat * offset_viewpsace;
+            vec4 offset_clipspace = PMat_o * offset_viewpsace;
             vec3 offset_NDC = offset_clipspace.xyz / offset_clipspace.w;
-            vec2 offset_UV = offset_NDC.xy ;
+            vec2 offset_UV = offset_NDC.xy * 0.5 + 0.5;
 
 
             float sampleDepth = texture(material.texture0, offset_UV).z;
 
 
             //occlusion = occlusion + (sampleDepth >= samplePosition_viewspace.z + bias ? 1.0 : 0.0);
-            float rangeCheck = smoothstep(0.0, 1.0, radius / abs(position_viewspace.z - sampleDepth)); // misty effect
+            float rangeCheck = smoothstep(0.0, 1.0, radius / abs(position_viewspace.z - sampleDepth));
             occlusion = occlusion + (sampleDepth >= samplePosition_viewspace.z + bias ? 1.0 : 0.0) * rangeCheck;    
         }
 
@@ -100,7 +98,7 @@ void main() {
         occlusion  = contrast * (occlusion - 0.5) + 0.5;
 
 
-        color = vec4(vec3(occlusion), 1.0);
-        //color = occlusion;
+        //color = vec4(vec3(occlusion), 1.0);
+        color = occlusion;
 	#fi
 }

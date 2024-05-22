@@ -40,7 +40,11 @@ struct Material {
 //UIO
 //**********************************************************************************************************************
 uniform Material material;
-
+#if (TRANSPARENT)
+uniform float alpha;
+#else
+float alpha = 1.0;
+#fi
 
 #if (DLIGHTS)
 uniform DLight dLights[##NUM_DLIGHTS];
@@ -55,6 +59,11 @@ uniform PLight pLights[##NUM_PLIGHTS];
 
 out vec4 color;
 
+
+uniform bool light_ambient;
+uniform bool light_diffuse;
+uniform bool light_specular;
+uniform bool ambientOcc;
 
 
 //FUNCTIONS
@@ -102,7 +111,10 @@ void main() {
 
             // ambientLighting
             float ambientStrength = 1.0;
-            vec3 ambient = vec3(ambientStrength * AmbientOcclusion);
+            vec3 ambient = vec3(ambientStrength);
+            if(ambientOcc)
+                ambient = vec3(ambientStrength * AmbientOcclusion);
+
 
             // diffuseLighting
             vec3 norm = normalize(Normal);
@@ -118,6 +130,13 @@ void main() {
             float spec = pow(max(dot(viewDir, reflectDir), 0.0), shininess);
             vec3 specular = specularStrength * spec * dLights[##lightIdx].color;
 
+            if(!light_ambient)
+                ambient = vec3(0.0);
+            if(!light_diffuse)
+                diffuse = vec3(0.0);
+            if(!light_specular)
+                specular = vec3(0.0);
+            
             combined+= ambient+ diffuse + specular;
         #end
     #fi
@@ -128,6 +147,10 @@ void main() {
         #end
     #fi
  
-    color = vec4(vec3(1.0)*( 1.0 - Color.a) + Color.rgb * combined,1.0);   
+    color = vec4(vec3(1.0)*( 1.0 - Color.a) + Color.rgb * combined, 1.0); 
+
+    if(ambientOcc && !light_ambient && !light_diffuse && !light_specular)
+        color = vec4(AmbientOcclusion, AmbientOcclusion, AmbientOcclusion, 1.0);
+  
 
 }
