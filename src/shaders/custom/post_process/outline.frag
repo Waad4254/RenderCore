@@ -7,6 +7,8 @@ struct Material {
         sampler2D texture0; //MODIFIABLE, VOLATILE! (DEPTH TEXTURE)
         sampler2D texture1; //MODIFIABLE, VOLATILE! (NORMAL TEXTURE)
         sampler2D texture2; //MODIFIABLE, VOLATILE! (VIEWDIR TEXTURE)
+        sampler2D texture3; //MODIFIABLE, VOLATILE! (Colors TEXTURE)
+
     #fi
 };
 
@@ -18,7 +20,7 @@ uniform float _NormalThreshold;
 uniform float _DepthNormalThreshold;
 uniform float _DepthNormalThresholdScale;
 uniform Material material;
-
+uniform bool outline;
 #if (TEXTURE)
     in vec2 fragUV;
 #fi
@@ -30,6 +32,9 @@ float sempleDepth(){
     return 0.0;
 }
 void main() {
+    if(!outline)
+        return;
+
 	#if (TEXTURE)
 
         // float2 inParam   = float2(1/width, 1/height);
@@ -111,7 +116,8 @@ void main() {
         #fi
 
         // Edge color
-        vec4 edgeColor = vec4(edgeColor.rgb, edgeColor.a * edge);
+        vec4 sceneColor = vec4(texture(material.texture3, fragUV).rgb,  1.0); //ORIGINAL
+        vec4 edgeColor = vec4(sceneColor.rgb * vec3(0.522, 0.431, 0.349), edgeColor.a * edge);
 
 
         // Output

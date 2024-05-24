@@ -154,7 +154,7 @@ void main() {
 
         //delta
         vec3 directionToMove_viewpsace = normal_viewspace * deltaOffset;
-        float distanceToMove_viewspace = (widthT) /2.0;
+        float distanceToMove_viewspace = (width) /2.0;
 
         vec4 delta_viewspace = vec4(directionToMove_viewpsace * distanceToMove_viewspace, 0.0);
         vec4 deltaVPos_viewspace = curr_viewspace + delta_viewspace;
@@ -183,6 +183,14 @@ void main() {
         else 
             color = texelFetch(material.instanceData1, tc, 0);
 
-        fragVColor = vec4(color.rgb, alpha);
+        #if (TRANSPARENT)
+        {
+            fragVColor = vec4(color.rgb, begE);
+        }
+        #else
+            fragVColor = vec4(color.rgb, alpha);
+        #fi
+
+
 
  }
