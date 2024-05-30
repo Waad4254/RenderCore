@@ -37,6 +37,7 @@ struct Material {
 
 };
 uniform Material material;
+uniform bool manualOpacity;
 
 #if (TRANSPARENT)
     uniform float alpha;
@@ -185,7 +186,10 @@ void main() {
 
         #if (TRANSPARENT)
         {
-            fragVColor = vec4(color.rgb, begE);
+            if(manualOpacity)
+                fragVColor = vec4(color.rgb, alpha);
+            else
+                fragVColor = vec4(color.rgb, begE);
         }
         #else
             fragVColor = vec4(color.rgb, alpha);
