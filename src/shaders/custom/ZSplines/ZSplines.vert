@@ -34,7 +34,6 @@ struct Material {
     sampler2D instanceData6;  // Pattern
     sampler2D instanceData7;  // Scene colors
 
-
 };
 uniform Material material;
 uniform bool manualOpacity;
@@ -49,6 +48,8 @@ uniform int numSegments;
 uniform float samples;
 uniform float limitT_min;
 uniform float limitT_max;
+uniform float limitE_min;
+uniform float limitE_max;
 uniform float width;
 uniform bool colors;
 
@@ -57,13 +58,13 @@ uniform bool colors;
 vec3 getPositionOnCurveT(float t, int iID)
 {
     int currentSegment = iID;
-    ivec2 tc  = ivec2(currentSegment, 0.0);
+    ivec2 tc  = ivec2(currentSegment%1350, currentSegment/1350);
 
     float t2 = t*t, t3 = t2*t;
 
-    vec4  coefficientsX = texelFetch(material.instanceData0, tc * ivec2(3), 0);
-    vec4  coefficientsY = texelFetch(material.instanceData0, tc * ivec2(3) + ivec2(1.0, 0.0), 0);
-    vec4  coefficientsZ = texelFetch(material.instanceData0, tc * ivec2(3) + ivec2(2.0, 0.0), 0);
+    vec4  coefficientsX = texelFetch(material.instanceData0, tc * ivec2(3.0, 1.0), 0);
+    vec4  coefficientsY = texelFetch(material.instanceData0, tc * ivec2(3.0, 1.0) + ivec2(1.0, 0.0), 0);
+    vec4  coefficientsZ = texelFetch(material.instanceData0, tc * ivec2(3.0, 1.0) + ivec2(2.0, 0.0), 0);
 
     vec3 point = vec3(coefficientsX.x +   coefficientsX.y*t + coefficientsX.z*t2 + coefficientsX.w*t3,
                coefficientsY.x +   coefficientsY.y*t + coefficientsY.z*t2 + coefficientsY.w*t3,
@@ -89,15 +90,23 @@ void main() {
         float currentS = VPos.x;
 
         ivec2 tc  = ivec2(currentSegment, 0.0);
-        vec2 time = texelFetch(material.instanceData3, tc, 0).rg;
+        vec2 time = texelFetch(material.instanceData3, ivec2(currentSegment%1350, currentSegment/1350), 0).rg;
         float begT = time.x;
         float endT = time.y;
+
+        vec2 energy = texelFetch(material.instanceData5, ivec2(currentSegment%1350, currentSegment/1350), 0).rg;
+        float begE = energy.x;
+        float endE = energy.y;
 
         float T_per_S = (endT - begT)/samples;
 
         float currentT = begT + (currentS * samples* T_per_S);
 
-        if(currentT > limitT_min && currentT < limitT_max)
+        float E_per_S = (endE - begE)/samples;
+        float currentE = begE + (currentS * samples* E_per_S);
+
+        if((currentT > limitT_min && currentT < limitT_max)
+        && (currentE > limitE_min && currentE < limitE_max))
             curr = getPositionOnCurveT(VPos.x, iID);
 
         vec3 pre; 
@@ -114,7 +123,8 @@ void main() {
         else 
             next = getPositionOnCurveT(VPos.x + 0.1, iID);
 
-        if(currentT >= limitT_max || currentT <= limitT_min)
+        if((currentT >= limitT_max || currentT <= limitT_min)
+        || (currentE >= limitE_max || currentE <= limitE_min))
         {
             curr = getPositionOnCurveT(0.0, iID); 
             pre = curr;
@@ -174,15 +184,11 @@ void main() {
 
         // Pass vertex color to fragment shader
         
-        vec2 energy = texelFetch(material.instanceData5, tc, 0).rg;
-        float begE = energy.x;
-        float endE = energy.y;
-
         vec4 color = vec4(0.0);
         if(colors)
             color = texture(material.instanceData7, vec2(begE, 0.0));
         else 
-            color = texelFetch(material.instanceData1, tc, 0);
+            color = texelFetch(material.instanceData1, ivec2(currentSegment%1350, currentSegment/1350), 0);
 
         #if (TRANSPARENT)
         {

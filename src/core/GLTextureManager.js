@@ -33,6 +33,8 @@ export class GLTextureManager {
 
 
 	_createGLTexture(texture){
+
+		console.log("texture",texture);
 		const internalFormat = this._formatToGL(texture._internalFormat);
 		const format = this._formatToGL(texture._format);
 		const magFilter = this._magFilterToGL(texture._magFilter);
@@ -87,6 +89,7 @@ export class GLTextureManager {
 		}
 		if(texture.image) {
 			this._gl.pixelStorei(this._gl.UNPACK_FLIP_Y_WEBGL, texture.flipy);
+			console.log("image test", this._gl.TEXTURE_2D, 0, 0, 0, width, height, format, type, texture.image);
 			this._gl.texSubImage2D(this._gl.TEXTURE_2D, 0, 0, 0, width, height, format, type, texture.image);
 			this._gl.pixelStorei(this._gl.UNPACK_FLIP_Y_WEBGL, false);
 		}
