@@ -110,21 +110,21 @@ void main() {
         #for lightIdx in 0 to NUM_DLIGHTS
 
             // ambientLighting
-            float ambientStrength = 1.0;
-            vec3 ambient = vec3(ambientStrength);
+            float ambientStrength = 0.5;
+            vec3 ambient = vec3(ambientStrength) * Color.rgb;
             if(ambientOcc)
-                ambient = vec3(ambientStrength * AmbientOcclusion);
+                ambient = vec3(ambientStrength * AmbientOcclusion) * Color.rgb;
 
 
             // diffuseLighting
             vec3 norm = normalize(Normal);
             vec3 lightDir = normalize(dLights[##lightIdx].position - FragPos);
             float diff = max(dot(norm, lightDir), 0.0);
-            vec3 diffuse =  diff * dLights[##lightIdx].color;
+            vec3 diffuse =  diff * dLights[##lightIdx].color * Color.rgb;
 
             // specularLighting
             float shininess = 32.0;
-            float specularStrength = 0.9;
+            float specularStrength = 0.3;
             vec3 viewDir = normalize(-FragPos);
             vec3 reflectDir = reflect(-lightDir, norm);
             float spec = pow(max(dot(viewDir, reflectDir), 0.0), shininess);
@@ -137,20 +137,20 @@ void main() {
             if(!light_specular)
                 specular = vec3(0.0);
             
-            combined+= ambient+ diffuse + specular;
+            combined+= ambient + diffuse + specular;
         #end
     #fi
 
     #if (PLIGHTS)
-        #for lightIdx in 0 to NUM_PLIGHTS
+        #for lightIdx in 0 to 2
             combined += calcPointLight(pLights[##lightIdx]);
         #end
     #fi
  
-    color = vec4(vec3(1.0)*( 1.0 - Color.a) + Color.rgb * combined, 1.0); 
+    color = vec4(combined, Color.a); 
 
     if(ambientOcc && !light_ambient && !light_diffuse && !light_specular)
-        color = vec4(AmbientOcclusion, AmbientOcclusion, AmbientOcclusion, 1.0);
+        color = vec4(AmbientOcclusion, AmbientOcclusion, AmbientOcclusion, Color.a);
   
 
 }

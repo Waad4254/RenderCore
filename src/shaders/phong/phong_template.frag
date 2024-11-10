@@ -772,23 +772,6 @@ void main() {
         vec3 combined = ambient * texture(material.diffuseMap, texCoords).rgb;
     #fi
 
-    #if (DLIGHTS)
-        vec3 dLight;
-        float dShadow = 0.0;
-
-        #for lightIdx in 0 to NUM_DLIGHTS
-            #if (!NORMAL_MAP)
-            dLight = calcDirectLight(dLights[##lightIdx], normal, viewDir);
-            #else
-            dLight = calcDirectLight_tangentspace(dLights[##lightIdx], v_dLightDirection_tangentspace[##lightIdx], viewDir, normal, texCoords);
-            #fi
-
-            if(dLights[##lightIdx].castShadows && material.receiveShadows)
-                dShadow = calcDirectShadow(fragVPos_dlightspace[##lightIdx], dLights[##lightIdx], normal);
-        
-            combined += dLight * (1.0 - dShadow);
-        #end
-    #fi
     #if (PLIGHTS)
         vec3 pLight;
         float pShadow = 0.0;
@@ -847,7 +830,6 @@ void main() {
             color[0] *= texture(material.cubeTexture##I_TEX, R);
         #end
     #fi
-
 
     color[1] = vec4(normal, 1.0);
     color[2] = vec4(abs(fragVPos), 1.0);

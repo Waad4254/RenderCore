@@ -100,7 +100,6 @@ export {StripeBasicMaterial} from './materials/StripeBasicMaterial.js';
 export {StripesBasicMaterial} from './materials/StripesBasicMaterial.js';
 export {PointBasicMaterial} from './materials/PointBasicMaterial.js';
 export {Text2DMaterial} from './materials/Text2DMaterial.js';
-export {ZTextMaterial} from './materials/ZTextMaterial.js';
 export {SkyBox2BasicMaterial} from './materials/SkyBox2BasicMaterial.js';
 export {DirectionalShadowMaterial} from './materials/DirectionalShadowMaterial.js';
 export {PointShadowMaterial} from './materials/PointShadowMaterial.js';
@@ -134,12 +133,16 @@ export {Stripes} from './objects/Stripes.js';
 export {StripesGeometry} from './objects/StripesGeometry.js';
 export {VertexNormal} from './objects/VertexNormal.js';
 export {Text2D} from './objects/Text2D.js';
-export {ZText} from './objects/ZText.js';
 export {Grid} from './objects/Grid.js';
 
 // Instanced, instance-pickable, outline-supporting materials and objects
 export {ZSpriteBasicMaterial} from './materials/ZSpriteBasicMaterial.js';
 export {ZSprite} from './objects/ZSprite.js';
+export {ZShapeBasicMaterial} from './materials/ZShapeBasicMaterial.js';
+export {ZShape} from './objects/ZShape.js';
+export {ZTextMaterial} from './materials/ZTextMaterial.js';
+export {ZText} from './objects/ZText.js';
+
 
 // Program Management
 export {MaterialProgramTemplate} from './program_management/MaterialProgramTemplate.js';

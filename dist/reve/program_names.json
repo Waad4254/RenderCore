@@ -16,6 +16,9 @@
   "custom_text2D",
   "custom_ZText",
   "custom_ZSplines",
-  "custom_ZSplinesLighting"
+  "custom_ZSplinesLighting",
+  "custom_colorMasking",
+  "custom_normalMasking"
+
 
 ]

@@ -153,7 +153,7 @@ out vec3 v_position_tangentspace;
 //out vec3 v_viewPosition_tangentspace; // = vec3(0.0, 0.0, 0.0)
 //out vec3 v_lightPosition_tangentspace; //array per light type
 
-
+ 
 #if (DLIGHTS)
 //out vec3 v_dLightPosition_tangentspace[##NUM_DLIGHTS];
 out vec3 v_dLightDirection_tangentspace[##NUM_DLIGHTS];

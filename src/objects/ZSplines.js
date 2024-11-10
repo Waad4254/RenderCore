@@ -10,7 +10,7 @@ import { Texture, FRONT_AND_BACK_SIDE } from '../RenderCore.js';
 
 export class ZSplines extends Mesh {
 
-    constructor(points, time, energy, samples, width, limitT_min, limitT_max, colorsPassed) {
+    constructor(points, time, energy, samples, width, limitT_min, limitT_max, colorsPassed, trackImportance, masked = false, main = false) {
 
 
         const material = new ZSplinesMaterial();
@@ -18,6 +18,8 @@ export class ZSplines extends Mesh {
 
         const pattern0 = [];
 
+        //console.log("loadData"); 
+        
         let gap = 1;
         let fill = 2;
         let full = 1000;
@@ -38,25 +40,14 @@ export class ZSplines extends Mesh {
 
         const functionCoefficients_XYZ = [];
         const colors = 
-            [    12/255.0, 0/255.0, 143/255.0, 1.0,
-                75/255.0, 44/255.0, 160/255.0, 1.0,
-                113/255.0, 82/255.0, 177/255.0, 1.0,
-                146/255.0, 120/255.0, 193/255.0, 1.0,
-                179/255.0, 159/255.0, 209/255.0, 1.0,
-                210/255.0, 199/255.0, 225/255.0, 1.0,
-                241/255.0, 241/255.0, 241/255.0, 1.0,
-                246/255.0, 211/255.0, 205/255.0, 1.0,
-                247/255.0, 182/255.0, 171/255.0, 1.0,
-                245/255.0, 152/255.0, 137/255.0, 1.0,
-                239/255.0, 121/255.0, 105/255.0, 1.0,
-                232/255.0, 87/255.0, 74/255.0, 1.0,
-                222/255.0, 44/255.0, 44/255.0, 1.0
-                ];
+            [   255/255.0, 0/255.0, 0/255.0, 1.0,
+                0/255.0, 255/255.0, 0/255.0, 1.0,
+                0/255.0, 0/255.0, 255/255.0, 1.0];
         const widths = 
-            [0.01,
-            0.01,
-            0.01,
-            0.01];
+            [10.9,
+            10.9,
+            10.9,
+            10.9];
 
         const radians = 
         [Math.PI / 2.0,
@@ -71,9 +62,9 @@ export class ZSplines extends Mesh {
         //******************************
         
 
-        let numSegments = ((points.length / 6)) / 2;
+        let numSegments = ((points.length / 12));
 
-        console.log("numSegments", numSegments);
+        //console.log("numSegments", numSegments);
         material.setUniform("numSegments", numSegments);
         material.setUniform("samples", samples * 1.0);
         material.setUniform("limitT_min", limitT_min);
@@ -117,10 +108,10 @@ export class ZSplines extends Mesh {
             coeTextureH = Math.ceil(coeTextureW / coetextureMax);
             coeTextureW = coetextureMax;
         }
-        console.log("coe textureMax", coetextureMax);
-        console.log("coeTextureW before", functionCoefficients_XYZ.length / 4);
-        console.log("coeTextureW after", coeTextureW);
-        console.log("coeTextureH after", coeTextureH);
+        //console.log("coe textureMax", coetextureMax);
+        //console.log("coeTextureW before", functionCoefficients_XYZ.length / 4);
+        //console.log("coeTextureW after", coeTextureW);
+        //console.log("coeTextureH after", coeTextureH);
 
         for(let i = functionCoefficients_XYZ.length / 4; i< coeTextureW * coeTextureH; i++)
         {
@@ -130,7 +121,7 @@ export class ZSplines extends Mesh {
             functionCoefficients_XYZ.push(0.0);
 
         }
-        console.log("coeTextureW before", functionCoefficients_XYZ.length / 12, numSegments);
+        //console.log("coeTextureW before", functionCoefficients_XYZ.length / 12, numSegments);
 
         material.setUniform("numSegments", functionCoefficients_XYZ.length / 12);
         numSegments =  functionCoefficients_XYZ.length / 12;
@@ -146,7 +137,8 @@ export class ZSplines extends Mesh {
             Texture.FORMAT.RGBA,
             Texture.TYPE.FLOAT,
             coeTextureW,
-            coeTextureH
+            coeTextureH,
+            main
         );
         functionCoefficients_XYZTexture._generateMipmaps = false;
         material.addInstanceData(functionCoefficients_XYZTexture);
@@ -160,10 +152,10 @@ export class ZSplines extends Mesh {
             colorsTextureH = Math.ceil(colorsTextureW / textureMax);
             colorsTextureW = textureMax;
         }
-        console.log("colors textureMax", textureMax);
-        console.log("colorsTextureW before", colorsPassed.length / 4);
-        console.log("colorsTextureW after", colorsTextureW);
-        console.log("colorsTextureH after", colorsTextureH);
+        //console.log("colors textureMax", textureMax);
+        //console.log("colorsTextureW before", colorsPassed.length / 4);
+        //console.log("colorsTextureW after", colorsTextureW);
+        //console.log("colorsTextureH after", colorsTextureH);
 
         let count = 0;
         for(let i = colorsPassed.length / 4; i< colorsTextureW * colorsTextureH; i++)
@@ -175,7 +167,7 @@ export class ZSplines extends Mesh {
 
             count+=4;
         }
-        console.log("colors count", count, (colorsPassed.length+count)/4);
+        //console.log("colors count", count, (colorsPassed.length+count)/4);
 
 
         const ColorsTexture = new Texture(
@@ -188,7 +180,8 @@ export class ZSplines extends Mesh {
             Texture.FORMAT.RGBA,
             Texture.TYPE.FLOAT,
             colorsTextureW,
-            colorsTextureH
+            colorsTextureH,
+            main
         );
         ColorsTexture._generateMipmaps = false;
         material.addInstanceData(ColorsTexture);
@@ -203,7 +196,8 @@ export class ZSplines extends Mesh {
             Texture.FORMAT.RED,
             Texture.TYPE.FLOAT,
             widths.length ,
-            1
+            1,
+            main
         );
         WidthTexture._generateMipmaps = false;
         material.addInstanceData(WidthTexture);
@@ -216,10 +210,10 @@ export class ZSplines extends Mesh {
             timeTextureH = Math.ceil(timeTextureW / timetextureMax);
             timeTextureW = timetextureMax;
         }
-        console.log("time textureMax", timetextureMax);
-        console.log("timeTextureW before", time.length / 3);
-        console.log("timeTextureW after", timeTextureW);
-        console.log("timeTextureH after", timeTextureH);
+        //console.log("time textureMax", timetextureMax);
+        //console.log("timeTextureW before", time.length / 3);
+        //console.log("timeTextureW after", timeTextureW);
+        //console.log("timeTextureH after", timeTextureH);
 
         for(let i = time.length / 3; i< timeTextureW * timeTextureH; i++)
         {
@@ -239,7 +233,8 @@ export class ZSplines extends Mesh {
             Texture.FORMAT.RGB,
             Texture.TYPE.FLOAT,
             timeTextureW,
-            timeTextureH
+            timeTextureH,
+            main
         );
         TimeTexture._generateMipmaps = false;
         material.addInstanceData(TimeTexture);
@@ -254,7 +249,8 @@ export class ZSplines extends Mesh {
             Texture.FORMAT.RED,
             Texture.TYPE.FLOAT,
             radians.length,
-            1
+            1,
+            main
         );
         RadiansTexture._generateMipmaps = false;
         material.addInstanceData(RadiansTexture);
@@ -268,10 +264,10 @@ export class ZSplines extends Mesh {
             energyTextureH = Math.ceil(energyTextureW / energytextureMax);
             energyTextureW = energytextureMax;
         }
-        console.log("energy textureMax", energytextureMax);
-        console.log("energyTextureW before", energy.length / 3);
-        console.log("energyTextureW after", energyTextureW);
-        console.log("energyTextureH after", energyTextureH);
+        //console.log("energy textureMax", energytextureMax);
+        //console.log("energyTextureW before", energy.length / 3);
+        //console.log("energyTextureW after", energyTextureW);
+        //console.log("energyTextureH after", energyTextureH);
 
         for(let i = energy.length / 3; i< energyTextureW * energyTextureH; i++)
         {
@@ -291,7 +287,8 @@ export class ZSplines extends Mesh {
             Texture.FORMAT.RGB,
             Texture.TYPE.FLOAT,
             energyTextureW,
-            energyTextureH
+            energyTextureH,
+            main
         );
         EnergyTexture._generateMipmaps = false;
         material.addInstanceData(EnergyTexture);
@@ -307,7 +304,8 @@ export class ZSplines extends Mesh {
             Texture.FORMAT.RED,
             Texture.TYPE.FLOAT,
             pattern0.length,
-            1
+            1,
+            main
         );
         PatternTexture._generateMipmaps = false;
         material.addInstanceData(PatternTexture);
@@ -322,16 +320,33 @@ export class ZSplines extends Mesh {
             Texture.FORMAT.RGBA,
             Texture.TYPE.FLOAT,
             colors.length / 4,
-            1
+            1,
+            main
         );
         ColorsRealTexture._generateMipmaps = false;
         material.addInstanceData(ColorsRealTexture);
 
 
+        const ImportanceTexture = new Texture(
+            new Float32Array(trackImportance),
+            Texture.WRAPPING.ClampToEdgeWrapping,
+            Texture.WRAPPING.ClampToEdgeWrapping,
+            Texture.FILTER.NearestFilter,
+            Texture.FILTER.NearestFilter,
+            Texture.FORMAT.R16F,
+            Texture.FORMAT.RED,
+            Texture.TYPE.FLOAT,
+            trackImportance.length,
+            1,
+            main
+        );
+        ImportanceTexture._generateMipmaps = false;
+        material.addInstanceData(ImportanceTexture);
+
         const line = [];
         const index = [];
         const texCoords = [];
-        for (let x = 0; x < samples; x++) {
+        for (let x = 0; x < (samples+1); x++) {
             if (true/*x == 0 || x==1*/) {
                 line.push(x / samples);
                 line.push(0.0);
@@ -364,6 +379,8 @@ export class ZSplines extends Mesh {
 
         }
 
+        //console.log("vertices",line);
+
         for (let x = 0; x < line.length / 3; x += 2) {
             if (x + 3 < line.length / 3) {
                 index.push(x);
@@ -376,9 +393,9 @@ export class ZSplines extends Mesh {
 
         }
 
+        //console.log("Resuilts: Number of vertices", (line.length / 3) * 12507, functionCoefficients_XYZ.length / 12);
 
-
-        console.log("index", index, "line", line);
+         console.log("Resuilts: Number of vertices per track", line.length / 3);
 
         geometry.vertices = Float32Attribute(line, 3);
         geometry.indices = Uint32Attribute(index, 1);
@@ -400,22 +417,14 @@ export class ZSplines extends Mesh {
         this.time = 0;
         this.gap = gap;
         this.fill = fill;
+        this.masked = masked;
+        this.importance = trackImportance[0];
     }
 
 
     static getCurveFunctionCoefficients(positionA, tangentA, positionB, tangentB) {
 
         const d = Math.sqrt(Math.pow(positionA[0] - positionB[0], 2) + Math.pow(positionA[1] - positionB[1], 2) + Math.pow(positionA[2] - positionB[2], 2));
-
-        //console.log("dis", d);
-
-        /*
-        const dotProduct = tangentA[0] * tangentB[0] + tangentA[1] * tangentB[1] + tangentA[2] * tangentB[2];
-        const normA = Math.sqrt(Math.pow(tangentA[0], 2) + Math.pow(tangentA[1], 2) + Math.pow(tangentA[2], 2));
-        const normB = Math.sqrt(Math.pow(tangentB[0], 2) + Math.pow(tangentB[1], 2) + Math.pow(tangentB[2], 2));
-        const theta = (Math.acos(dotProduct / (normA * normB))) * 180 / Math.PI;
-        if (theta > 90) console.log("theta", theta);
-        */
 
         const tension = 1;
         const tension2 = 1;
@@ -469,6 +478,14 @@ export class ZSplines extends Mesh {
 
     setColors(colors) {
         this.material.setUniform("colors", colors);
+    }
+
+    setTEnergyMax(maxE) { 
+        this.material.setUniform("energyMax", maxE);
+    }
+
+    setWidth(width) {
+        this.material.setUniform("width", width);
     }
 
 

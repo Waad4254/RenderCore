@@ -2,7 +2,7 @@
  * Created by Primoz on 21. 07. 2016.
  */
 import {_Math} from '../math/Math.js';
-
+ 
 export class Texture {
 	static DEFAULT_IMAGE = null;
 	static FILTER = {
@@ -52,18 +52,22 @@ export class Texture {
 		INT : 26
 	};
 
+	static gpuMemory = 0;
+
 
 	_update = {
 		size: true,
 	};
 
 
-	constructor(image, wrapS, wrapT, minFilter, magFilter, internalFormat, format, type, width = 1024, height = 1024) {
+	constructor(image, wrapS, wrapT, minFilter, magFilter, internalFormat, format, type, width = 1024, height = 1024, main = false) {
 		this._uuid = _Math.generateUUID();
 		this.type = "Texture";
 
 		this._image = (image) ? image : Texture.DEFAULT_IMAGE;
-
+		if(image && main) {
+			Texture.gpuMemory += image.buffer.byteLength * 1e-6; // MB
+		}
 		// Filters
 		this._magFilter = (magFilter !== undefined) ? magFilter : Texture.FILTER.LinearFilter;
 		this._minFilter = (minFilter !== undefined) ? minFilter : Texture.FILTER.LinearFilter;

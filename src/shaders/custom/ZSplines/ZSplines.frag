@@ -17,6 +17,7 @@ struct Material {
     sampler2D instanceData5;  // Energy
     sampler2D instanceData6;  // Pattern
     sampler2D instanceData7;  // Scene colors
+    sampler2D instanceData8;  // importance
 
 };
 
@@ -29,6 +30,7 @@ in vec3 vNormal;
 in vec3 vBinormal;
 in vec2 fragUV;
 in float qLength;
+in float importance;
 
 
 layout (location = 0) out vec4 gPosition;
@@ -37,6 +39,9 @@ layout (location = 2) out vec4 gNormalTheta;
 layout (location = 3) out vec4 gBinormal;
 layout (location = 4) out vec4 gColor;
 layout (location = 5) out vec4 gViewDirection;
+layout (location = 6) out vec4 gImportance;
+
+
 
 
 //MAIN
@@ -46,6 +51,7 @@ void main() {
     float R = texture(material.instanceData4, vec2(fragUV.y, 0.0)).r;
     vec3 normalTheta = vNormal * cos(R) + vBinormal * sin(R);
     vec3 norm = normalize(normalTheta);
+    
 
     float pLength = mod(qLength + pattern, 1.0);
     float p = 1.0;
@@ -64,5 +70,8 @@ void main() {
     gBinormal = vec4(normalize(vBinormal), 0.0);
     gColor = fragVColor;
     gViewDirection = vec4(0.0);
+    gImportance = vec4(fragVColor.rgb, 1.0);
+    
+    
 
 }

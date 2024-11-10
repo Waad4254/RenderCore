@@ -20,6 +20,7 @@ out vec3 vNormal;
 out vec3 vBinormal;
 out vec2 fragUV;
 out float qLength;
+out float importance;
 
 struct Material {
     vec3 emissive;
@@ -33,6 +34,7 @@ struct Material {
     sampler2D instanceData5;  // Energy
     sampler2D instanceData6;  // Pattern
     sampler2D instanceData7;  // Scene colors
+    sampler2D instanceData8;  // importance
 
 };
 uniform Material material;
@@ -52,6 +54,8 @@ uniform float limitE_min;
 uniform float limitE_max;
 uniform float width;
 uniform bool colors;
+uniform bool imp_check;
+uniform float imp_id;
 
 
 
@@ -83,6 +87,9 @@ void main() {
     int vID = gl_VertexID;
     int currentSegment = iID;
 
+    
+
+
     #if (!OUTLINE)
 
         //Getting positions
@@ -105,8 +112,10 @@ void main() {
         float E_per_S = (endE - begE)/samples;
         float currentE = begE + (currentS * samples* E_per_S);
 
-        if((currentT > limitT_min && currentT < limitT_max)
-        && (currentE > limitE_min && currentE < limitE_max))
+        importance = texelFetch(material.instanceData8, ivec2(currentSegment, 0.0), 0).r;
+
+        if((currentT >= limitT_min && currentT <= limitT_max)
+        && (currentE >= limitE_min && currentE <= limitE_max))
             curr = getPositionOnCurveT(VPos.x, iID);
 
         vec3 pre; 
@@ -123,8 +132,8 @@ void main() {
         else 
             next = getPositionOnCurveT(VPos.x + 0.1, iID);
 
-        if((currentT >= limitT_max || currentT <= limitT_min)
-        || (currentE >= limitE_max || currentE <= limitE_min))
+        if((currentT > limitT_max || currentT < limitT_min)
+        || (currentE > limitE_max || currentE < limitE_min))
         {
             curr = getPositionOnCurveT(0.0, iID); 
             pre = curr;
@@ -137,7 +146,7 @@ void main() {
         vec4 next_viewspace = MVMat * vec4(next, 1.0);
 
         //distance
-        vec3 end = getPositionOnCurveT(0.9, iID);
+        vec3 end = getPositionOnCurveT(1.0, iID);
         float length = 0.0;
         
         length = sqrt(pow(curr.x - end.x, 2.0) + pow(curr.y - end.y, 2.0) + pow(curr.z - end.z, 2.0));
@@ -173,7 +182,7 @@ void main() {
         vec4 VPos4 = deltaVPos_viewspace;  
     #fi
 
-    fragVPos = VPos4.xyz / VPos4.w;
+    //fragVPos = VPos4.xyz / VPos4.w;
         
     fragUV = uv_m;
 
@@ -181,6 +190,9 @@ void main() {
     // Projected position
     gl_Position = PMat * VPos4;
 
+    fragVPos = vec3(VPos4) / VPos4.w;
+
+ 
 
         // Pass vertex color to fragment shader
         
@@ -198,7 +210,22 @@ void main() {
                 fragVColor = vec4(color.rgb, begE);
         }
         #else
+        if(imp_check)
+        {
+            if(imp_id == 0.0)
+                fragVColor = vec4(vec3(1.0,0.0,0.0), alpha);
+            else if(imp_id == 1.0)
+                fragVColor = vec4(vec3(0.0,1.0,0.0), alpha);
+            else if(imp_id == 2.0)
+                fragVColor = vec4(vec3(0.0,0.0,1.0), alpha);
+            else
+                fragVColor = vec4(vec3(0.5,1.0,1.0), alpha);
+        }
+        else 
+        {
             fragVColor = vec4(color.rgb, alpha);
+        }
+            
         #fi
 
 
