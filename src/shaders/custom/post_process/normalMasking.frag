@@ -59,23 +59,23 @@ void main() {
         vec4 binormal_m = texture(material.texture10, fragUV).rgba;
         vec4 binormal_l = texture(material.texture11, fragUV).rgba;
 
-        vec4 normal_h_filtered = vec4(mask_h.rgb * normal_h.rgb, mask_h.a);
+        vec4 normal_h_filtered = vec4(normal_h.rgb, mask_h.a);
         vec4 normal_m_filtered = vec4(normal_m.rgb, normal_m.a * (1.0 - mask_h.a));
         vec4 normal_l_filtered = vec4(normal_l.rgb, normal_l.a * (1.0 - mask_m.a) * (1.0 - mask_h.a));
 
-        vec4 normalTheta_h_filtered = vec4(mask_h.rgb * normalTheta_h.rgb, mask_h.a);
+        vec4 normalTheta_h_filtered = vec4(normalTheta_h.rgb, mask_h.a);
         vec4 normalTheta_m_filtered = vec4(normalTheta_m.rgb, normalTheta_m.a * (1.0 - mask_h.a));
         vec4 normalTheta_l_filtered = vec4(normalTheta_l.rgb, normalTheta_l.a * (1.0 - mask_m.a) * (1.0 - mask_h.a));
 
-        vec4 binormal_h_filtered = vec4(mask_h.rgb * binormal_h.rgb, mask_h.a);
+        vec4 binormal_h_filtered = vec4(binormal_h.rgb, mask_h.a);
         vec4 binormal_m_filtered = vec4(binormal_m.rgb, binormal_m.a * (1.0 - mask_h.a));
         vec4 binormal_l_filtered = vec4(binormal_l.rgb, binormal_l.a * (1.0 - mask_m.a) * (1.0 - mask_h.a));
 
-        normal_blended = normal_h + (normal_m_filtered * normal_m_filtered.a) + (normal_l_filtered* normal_l_filtered.a);
+        normal_blended = normal_h_filtered + (normal_m_filtered * normal_m_filtered.a) + (normal_l_filtered* normal_l_filtered.a);
 
-        normalTheta_blended = normalTheta_h + (normalTheta_m_filtered * normalTheta_m_filtered.a) + (normalTheta_l_filtered* normalTheta_l_filtered.a);
+        normalTheta_blended = normalTheta_h_filtered + (normalTheta_m_filtered * normalTheta_m_filtered.a) + (normalTheta_l_filtered* normalTheta_l_filtered.a);
 
-        binormal_blended = binormal_h + (binormal_m_filtered * binormal_m_filtered.a) + (binormal_l_filtered* binormal_l_filtered.a);
+        binormal_blended = binormal_h_filtered + (binormal_m_filtered * binormal_m_filtered.a) + (binormal_l_filtered* binormal_l_filtered.a);
 
 	#fi
 }

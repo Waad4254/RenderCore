@@ -15,6 +15,10 @@ uniform Material material;
 uniform bool horizontal;
 uniform float power;
 
+uniform float[##RADIUS] offset;
+uniform float[##RADIUS] weight;
+
+
 #if (TEXTURE)
     in vec2 fragUV;
 #fi
@@ -26,18 +30,13 @@ out vec4 color;
 //**********************************************************************************************************************//
 void main() {
 	#if (TEXTURE)
-		//bool horizontal = true;
-
-		//float weight[5] = float[] (0.2270270270, 0.1945945946, 0.1216216216, 0.0540540541, 0.0162162162);
-		//float[19] weight = float[] (0.0426,	0.0424,	0.0418,	0.0407,	0.0393,	0.0376,	0.0356,	0.0334,	0.0310,	0.0284,	0.0259,	0.0233,	0.0208,	0.0183,	0.0160,	0.0138,	0.0119,	0.0101,	0.0084);
-		//float[8] weight = float[] (0.3, 0.2, 0.1, 0.200, 0.150, 0.100, 0.006, 0.001); //custom "gauss"
-		//float[8] weight = float[] (0.19950135, 0.17605932, 0.12100368, 0.0647686, 0.02699957, 0.00876548, 0.00221626, 0.00043641);
 
 		vec2 tex_size = vec2(textureSize(material.texture0, 0));
-		float offset[3] = float[](0.0, 1.3846153846, 3.2307692308);
-		float weight[3] = float[](0.2270270270, 0.3162162162, 0.0702702703);
+		// Blur radius = 10, Blur sigma = 2
+		//float offset[11] = float[](0.0, 1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0, 10.0);
+		//float weight[11] = float[](0.13242929584580776, 0.12533695271938072, 0.1062586549760548, 0.08069331538128802, 0.054890876729450484, 0.03344634551433034, 0.018254858014285263, 0.008924559339265243, 0.003908169554935672, 0.0015329920806177449, 0.0005386277674878371);
 
-		vec2 tex_offset = (1.0 / vec2(textureSize(material.texture0, 0)))*2.0; // gets size of single texel
+
 		vec4 color_tex = texture(material.texture0, fragUV).rgba;
 		vec4 result = color_tex * weight[0]*power; // current fragment's contribution
 
@@ -56,7 +55,7 @@ void main() {
 
 
 		//color = vec4((result.rgb), 1.0);
-		color = result;
+		color = result * result.a;
 		//color = vec4(result.rgb, min(result.a, 1.0)); //separability issues
 	#fi
 }

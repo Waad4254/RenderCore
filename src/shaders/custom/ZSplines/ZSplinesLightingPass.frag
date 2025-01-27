@@ -110,7 +110,7 @@ void main() {
         #for lightIdx in 0 to NUM_DLIGHTS
 
             // ambientLighting
-            float ambientStrength = 0.5;
+            float ambientStrength = 0.6;
             vec3 ambient = vec3(ambientStrength) * Color.rgb;
             if(ambientOcc)
                 ambient = vec3(ambientStrength * AmbientOcclusion) * Color.rgb;
