@@ -25,7 +25,7 @@ uniform float power;
     in vec2 fragUV;
 #fi
 
-out float FragColor;
+out vec4 FragColor;
 
 
 TextureData texture0Data;
@@ -48,7 +48,7 @@ void main() {
 			}
 		}
 
-		FragColor = result/16.0;
+		FragColor = vec4(vec3(result/16.0), 1.0);
  
 	#fi
 }

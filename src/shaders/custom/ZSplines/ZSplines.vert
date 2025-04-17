@@ -56,6 +56,7 @@ uniform float width;
 uniform bool colors;
 uniform bool imp_check;
 uniform float imp_id;
+uniform vec3 cluster_color;
 
 
 
@@ -147,11 +148,14 @@ void main() {
 
         //distance
         vec3 end = getPositionOnCurveT(1.0, iID);
+        vec3 beg = getPositionOnCurveT(0.0, iID);
+
         float length = 0.0;
         
         length = sqrt(pow(curr.x - end.x, 2.0) + pow(curr.y - end.y, 2.0) + pow(curr.z - end.z, 2.0));
 
-        qLength = length;
+        qLength = (length / 500.0);
+;
 
         //tangent
         vec4 AB_tangent_viewspace = next_viewspace - prev_viewspace;
@@ -197,6 +201,7 @@ void main() {
         // Pass vertex color to fragment shader
         
         vec4 color = vec4(0.0);
+
         if(colors)
             color = texture(material.instanceData7, vec2(begE, 0.0));
         else 
@@ -212,14 +217,8 @@ void main() {
         #else
         if(imp_check)
         {
-            if(imp_id == 0.0)
-                fragVColor = vec4(vec3(1.0,0.0,0.0), alpha);
-            else if(imp_id == 1.0)
-                fragVColor = vec4(vec3(0.0,1.0,0.0), alpha);
-            else if(imp_id == 2.0)
-                fragVColor = vec4(vec3(0.0,0.0,1.0), alpha);
-            else
-                fragVColor = vec4(vec3(0.5,1.0,1.0), alpha);
+            fragVColor = vec4(cluster_color, alpha);
+
         }
         else 
         {

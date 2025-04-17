@@ -179,10 +179,3 @@ export {KeyboardInput} from './controls/KeyboardInput.js';
 export {MouseInput} from './controls/MouseInput.js';
 export {GamepadInput} from './controls/GamepadInput.js';
 
-//Fonts 
-export {roboto_font} from '../examples/common/textures/fonts/roboto.js';
-export {roboto_bold_font} from '../examples/common/textures/fonts/roboto-bold.js';
-export {ubuntu_font} from '../examples/common/textures/fonts/ubuntu.js';
-export {ubuntu_bold_font} from '../examples/common/textures/fonts/ubuntu-bold.js';
-export {dejavu_font} from '../examples/common/textures/fonts/dejavu-serif.js';
-export {dejavu_italic_font} from '../examples/common/textures/fonts/dejavu-serif-italic.js';

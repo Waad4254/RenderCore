@@ -103,24 +103,26 @@ void main() {
     vec3 FragPos = texture(material.texture0, fragUV).rgb;
     vec3 Normal = texture(material.texture1, fragUV).rgb;
     vec4 Color = texture(material.texture3, fragUV).rgba;
+    Color = clamp(Color, vec4(0.0), vec4(1.0));
+
     float AmbientOcclusion = texture(material.texture4, fragUV).r;
 
+    // ambientLighting
+    float ambientStrength = 0.3;
+    vec3 ambient = vec3(ambientStrength) * Color.rgb;
+    if(ambientOcc)
+        ambient = vec3(ambientStrength * AmbientOcclusion) * Color.rgb;
 
-    #if (DLIGHTS)
-        #for lightIdx in 0 to NUM_DLIGHTS
 
-            // ambientLighting
-            float ambientStrength = 0.6;
-            vec3 ambient = vec3(ambientStrength) * Color.rgb;
-            if(ambientOcc)
-                ambient = vec3(ambientStrength * AmbientOcclusion) * Color.rgb;
 
+    #if (PLIGHTS)
+        #for lightIdx in 0 to 1
 
             // diffuseLighting
             vec3 norm = normalize(Normal);
-            vec3 lightDir = normalize(dLights[##lightIdx].position - FragPos);
+            vec3 lightDir = normalize(pLights[##lightIdx].position - FragPos);
             float diff = max(dot(norm, lightDir), 0.0);
-            vec3 diffuse =  diff * dLights[##lightIdx].color * Color.rgb;
+            vec3 diffuse =  diff * pLights[##lightIdx].color * Color.rgb;
 
             // specularLighting
             float shininess = 32.0;
@@ -128,7 +130,7 @@ void main() {
             vec3 viewDir = normalize(-FragPos);
             vec3 reflectDir = reflect(-lightDir, norm);
             float spec = pow(max(dot(viewDir, reflectDir), 0.0), shininess);
-            vec3 specular = specularStrength * spec * dLights[##lightIdx].color;
+            vec3 specular = specularStrength * spec * pLights[##lightIdx].color;
 
             if(!light_ambient)
                 ambient = vec3(0.0);
@@ -140,17 +142,15 @@ void main() {
             combined+= ambient + diffuse + specular;
         #end
     #fi
-
-    #if (PLIGHTS)
-        #for lightIdx in 0 to 2
-            combined += calcPointLight(pLights[##lightIdx]);
-        #end
-    #fi
  
     color = vec4(combined, Color.a); 
 
     if(ambientOcc && !light_ambient && !light_diffuse && !light_specular)
+    {
         color = vec4(AmbientOcclusion, AmbientOcclusion, AmbientOcclusion, Color.a);
+
+    }
+        
   
 
 }

@@ -1,11 +1,27 @@
 import {RenderQueue} from '../renderers/RenderQueue.js';
 import {RenderPass}  from '../renderers/RenderPass.js';
 import {CustomShaderMaterial} from '../materials/CustomShaderMaterial.js';
+import * as RC from "../RenderCore.js";
 import {FRONT_AND_BACK_SIDE, HIGHPASS_MODE_BRIGHTNESS, HIGHPASS_MODE_DIFFERENCE}
     from '../constants.js';
+import { Vector3 } from "../math/Vector3.js";
+import { _Math } from "../math/Math.js";
 
-export class RendeQuTor
-{
+function iterateSceneR(object, callback) {
+    if (object === null || object === undefined) {
+        return;
+    }
+
+    if (object.children.length > 0) {
+        for (let i = 0; i < object.children.length; i++) {
+            iterateSceneR(object.children[i], callback);
+        }
+    }
+
+    callback(object);
+}
+
+export class RendeQuTor {
     constructor(renderer, scene, camera, overlay_scene)
     {
         this.renderer = renderer;
@@ -51,6 +67,14 @@ export class RendeQuTor
 
         this.make_RP_SSAA_Super();
 
+        this.make_RP_Splines();
+        this.make_RP_Splines_IOR();
+        this.make_RP_GaussHV();
+
+        this.make_RP_SSAO();
+
+        this.make_RP_blur();
+
         this.make_RP_GBuffer();
         this.make_RP_Outline();
 
@@ -70,7 +94,15 @@ export class RendeQuTor
             this.RP_GaussH_mat.requiredProgram(this.renderer),
             this.RP_Blend_mat.requiredProgram(this.renderer),
             this.RP_ToScreen_mat.requiredProgram(this.renderer),
-            this.RP_ToneMapToScreen_mat.requiredProgram(this.renderer)
+            this.RP_ToneMapToScreen_mat.requiredProgram(this.renderer),
+            this.RP_SSAO_mat.requiredProgram(this.renderer),
+            this.RP_SimpleBlur_mat.requiredProgram(this.renderer),
+            this.RP_Splines_Lighting_mat.requiredProgram(this.renderer),
+            this.RP_Splines_Color_Mask_mat.requiredProgram(this.renderer),
+            this.RP_Splines_Normal_Mask_mat.requiredProgram(this.renderer),
+            this.RP_GaussV_Splines_mat.requiredProgram(this.renderer),
+            this.RP_GaussH_Splines_mat.requiredProgram(this.renderer),
+
           ]);
     }
 
@@ -155,6 +187,7 @@ export class RendeQuTor
 
     render_main_and_blend_outline()
     {
+
         let main_is_std = (this.SSAA_value == 1);
         let tex_main = main_is_std ? this.pop_std_texture() : "color_main";
 
@@ -190,6 +223,205 @@ export class RendeQuTor
             this.tex_final = tex_main;
             this.tex_final_push = main_is_std;
         }
+    }
+
+    render_Splines_IOR_and_blend_it(clusters)
+    {
+        let tex_position_Splines = [];
+        let tex_normal_Splines = [];
+        let tex_normalTheta_Splines = [];
+        let tex_binormal_Splines = [];
+        let tex_color_Splines = [];
+        let tex_depth_Splines = [];
+        let tex_mask_Splines = [];
+        let tex_mask_Splines_final = [];
+
+        let tex_depth_Splines_final = this.pop_std_texture();
+        let tex_position_Splines_final = this.pop_std_texture();
+        let tex_normalTheta_Splines_final = this.pop_std_texture();
+        let tex_normal_Splines_final = this.pop_std_texture();
+        let tex_binormal_Splines_final = this.pop_std_texture();
+        let tex_color_Splines_final = this.pop_std_texture();
+        let tex_gaussian = this.pop_std_texture();
+
+
+
+
+        for (let i = 0; i< clusters; i++)
+        {
+            this.cluster = i;
+
+            tex_position_Splines[i] = this.pop_std_texture();
+            tex_normal_Splines[i] = this.pop_std_texture();
+            tex_normalTheta_Splines[i] = this.pop_std_texture();
+            tex_binormal_Splines[i] = this.pop_std_texture();
+            tex_color_Splines[i] = this.pop_std_texture();
+            tex_mask_Splines[i] = this.pop_std_texture();
+            tex_mask_Splines_final[i] = this.pop_std_texture();
+            tex_depth_Splines[i] = this.RP_Splines.outDepthID;
+
+            this.RP_Splines.outTextures[0].id = tex_position_Splines[i];
+            this.RP_Splines.outTextures[1].id = tex_normal_Splines[i];
+            this.RP_Splines.outTextures[2].id = tex_normalTheta_Splines[i];
+            this.RP_Splines.outTextures[3].id = tex_binormal_Splines[i];
+            this.RP_Splines.outTextures[4].id = tex_color_Splines[i];
+            this.RP_Splines.outTextures[6].id = tex_mask_Splines[i];
+
+            this.queue.render_pass(this.RP_Splines, "Splines");
+
+            this.RP_GaussH_Splines.intex = tex_mask_Splines[i];
+            this.RP_GaussH_Splines.outTextures[0].id = tex_gaussian;
+            this.queue.render_pass(this.RP_GaussH_Splines, "GaussianH");
+
+            this.RP_GaussV_Splines.intex = tex_gaussian;
+            this.RP_GaussV_Splines.outTextures[0].id = tex_mask_Splines_final[i];
+            this.queue.render_pass(this.RP_GaussV_Splines, "GaussianV");  
+            
+        }
+        
+        this.RP_Splines_Color_Mask.mask0 = tex_mask_Splines_final[0];
+        this.RP_Splines_Color_Mask.mask1 = tex_mask_Splines_final[1];
+        this.RP_Splines_Color_Mask.mask2 = tex_mask_Splines_final[2];
+
+        this.RP_Splines_Color_Mask.color_cluster0 = tex_color_Splines[0];
+        this.RP_Splines_Color_Mask.color_cluster1 = tex_color_Splines[1];
+        this.RP_Splines_Color_Mask.color_cluster2 = tex_color_Splines[2];
+
+        this.RP_Splines_Color_Mask.position_cluster0 = tex_position_Splines[0];
+        this.RP_Splines_Color_Mask.position_cluster1 = tex_position_Splines[1];
+        this.RP_Splines_Color_Mask.position_cluster2 = tex_position_Splines[2];
+
+        this.RP_Splines_Color_Mask.depth_cluster0 = tex_depth_Splines[0];
+        this.RP_Splines_Color_Mask.depth_cluster1 = tex_depth_Splines[1];
+        this.RP_Splines_Color_Mask.depth_cluster2 = tex_depth_Splines[2];
+
+        this.RP_Splines_Color_Mask.outTextures[0].id = tex_color_Splines_final;
+        this.RP_Splines_Color_Mask.outTextures[1].id = tex_position_Splines_final;
+        this.RP_Splines_Color_Mask.outTextures[2].id = tex_depth_Splines_final;
+
+        this.queue.render_pass(this.RP_Splines_Color_Mask, "Splines Masking 1");
+
+
+        this.RP_Splines_Normal_Mask.mask0 = tex_mask_Splines[0];
+        this.RP_Splines_Normal_Mask.mask1 = tex_mask_Splines[1];
+        this.RP_Splines_Normal_Mask.mask2 = tex_mask_Splines[2];
+
+        this.RP_Splines_Normal_Mask.normal_cluster0 = tex_normal_Splines[0];
+        this.RP_Splines_Normal_Mask.normal_cluster1 = tex_normal_Splines[1];
+        this.RP_Splines_Normal_Mask.normal_cluster2 = tex_normal_Splines[2];
+
+        this.RP_Splines_Normal_Mask.normalTheta_cluster0 = tex_normalTheta_Splines[0];
+        this.RP_Splines_Normal_Mask.normalTheta_cluster1 = tex_normalTheta_Splines[1];
+        this.RP_Splines_Normal_Mask.normalTheta_cluster2 = tex_normalTheta_Splines[2];
+
+        this.RP_Splines_Normal_Mask.binormal_cluster0 = tex_binormal_Splines[0];
+        this.RP_Splines_Normal_Mask.binormal_cluster1 = tex_binormal_Splines[1];
+        this.RP_Splines_Normal_Mask.binormal_cluster2 = tex_binormal_Splines[2];
+
+        this.RP_Splines_Normal_Mask.outTextures[0].id = tex_normal_Splines_final;
+        this.RP_Splines_Normal_Mask.outTextures[1].id = tex_normalTheta_Splines_final;
+        this.RP_Splines_Normal_Mask.outTextures[2].id = tex_binormal_Splines_final;
+
+        this.queue.render_pass(this.RP_Splines_Normal_Mask, "Splines Masking 2");
+
+
+        this.RP_SSAO.position_SSAO = tex_position_Splines_final;
+        this.RP_SSAO.normal_SSAO = tex_normal_Splines_final;
+
+        let tex_ssao = this.pop_std_texture();
+        this.RP_SSAO.outTextures[0].id = tex_ssao;
+        this.queue.render_pass(this.RP_SSAO, "SSAO");
+
+        this.RP_SimpleBlur.in_tex_blur = tex_ssao;
+
+        let tex_ssao_blur = this.pop_std_texture();
+        this.RP_SimpleBlur.outTextures[0].id = tex_ssao_blur;
+        this.queue.render_pass(this.RP_SimpleBlur, "SSAO_sb");
+
+      
+        let tex_splines_light = this.pop_std_texture();
+        this.RP_Splines_Lighting.position_splines_lighting = tex_position_Splines_final;
+        this.RP_Splines_Lighting.normalTheta_splines_lighting = tex_normalTheta_Splines_final;
+        this.RP_Splines_Lighting.binormal_splines_lighting = tex_binormal_Splines_final;
+        this.RP_Splines_Lighting.color_splines_lighting = tex_color_Splines_final;
+        this.RP_Splines_Lighting.SSAO_splines_lighting = tex_ssao_blur;
+        
+        this.RP_Splines_Lighting.outTextures[0].id = tex_splines_light;
+        this.queue.render_pass(this.RP_Splines_Lighting, "Splines Lighting");
+
+
+        let splines_final = this.pop_std_texture();
+        // Reuse blending pass from outline merging.
+        this.RP_Blend.intex_outline_blurred = tex_splines_light;
+        this.RP_Blend.intex_main = this.tex_final;
+        this.RP_Blend.outTextures[0].id = splines_final;
+        this.queue.render_pass(this.RP_Blend, "Blend Splines");
+
+        if (this.tex_final_push) {
+            this.push_std_texture(this.tex_final);
+        }
+        this.tex_final = splines_final;
+        this.tex_final_push = true;
+    }
+
+    render_Splines_and_blend_it()
+    {
+        this.cluster = -1;
+        let tex_position_Splines = this.pop_std_texture();
+        let tex_normal_Splines = this.pop_std_texture();
+        let tex_normalTheta_Splines = this.pop_std_texture();
+        let tex_binormal_Splines = this.pop_std_texture();
+        let tex_color_Splines = this.pop_std_texture();
+        let tex_mask_Splines = this.pop_std_texture();
+
+        this.RP_Splines.outTextures[0].id = tex_position_Splines; 
+        this.RP_Splines.outTextures[1].id = tex_normal_Splines;
+        this.RP_Splines.outTextures[2].id = tex_normalTheta_Splines;
+        this.RP_Splines.outTextures[3].id = tex_binormal_Splines;
+        this.RP_Splines.outTextures[4].id = tex_color_Splines;
+        this.RP_Splines.outTextures[6].id = tex_mask_Splines;
+
+
+        //console.log("Test ids", this.RP_Splines.outTextures[6].id, tex_depth_Splines);
+        this.queue.render_pass(this.RP_Splines, "Splines");
+
+        this.RP_SSAO.position_SSAO = tex_position_Splines;
+        this.RP_SSAO.normal_SSAO = tex_normal_Splines;
+
+        let tex_ssao = this.pop_std_texture();
+        this.RP_SSAO.outTextures[0].id = tex_ssao;
+        this.queue.render_pass(this.RP_SSAO, "SSAO");
+
+        this.RP_SimpleBlur.in_tex_blur = tex_ssao;
+
+        let tex_ssao_blur = this.pop_std_texture();
+        this.RP_SimpleBlur.outTextures[0].id = tex_ssao_blur;
+        this.queue.render_pass(this.RP_SimpleBlur, "SSAO_sb");
+
+      
+        let tex_splines_light = this.pop_std_texture();
+        this.RP_Splines_Lighting.position_splines_lighting = tex_position_Splines;
+        this.RP_Splines_Lighting.normalTheta_splines_lighting = tex_normalTheta_Splines;
+        this.RP_Splines_Lighting.binormal_splines_lighting = tex_binormal_Splines;
+        this.RP_Splines_Lighting.color_splines_lighting = tex_color_Splines;
+        this.RP_Splines_Lighting.SSAO_splines_lighting = tex_ssao_blur;
+        
+        this.RP_Splines_Lighting.outTextures[0].id = tex_splines_light;
+        this.queue.render_pass(this.RP_Splines_Lighting, "Splines Lighting");
+
+
+        let splines_final = this.pop_std_texture();
+        // Reuse blending pass from outline merging.
+        this.RP_Blend.intex_outline_blurred = tex_splines_light;
+        this.RP_Blend.intex_main = this.tex_final;
+        this.RP_Blend.outTextures[0].id = splines_final;
+        this.queue.render_pass(this.RP_Blend, "Blend Splines");
+
+        if (this.tex_final_push) {
+            this.push_std_texture(this.tex_final);
+        }
+        this.tex_final = splines_final;
+        this.tex_final_push = true;
     }
 
     render_overlay_and_blend_it()
@@ -514,9 +746,25 @@ export class RendeQuTor
             // Initialize function
             function (textureMap, additionalData) {},
             // Preprocess function
-            function (textureMap, additionalData) { return { scene: pthis.scene, camera: pthis.camera }; },
+            function (textureMap, additionalData) { 
+
+                iterateSceneR(pthis.scene, function (object) {
+                    if (object instanceof RC.ZSplines) {
+                        object.visible = false;
+                    }
+                });
+
+                return { scene: pthis.scene, camera: pthis.camera }; },
             // Postprocess
-            function (textureMap, additionalData) {},
+            function (textureMap, additionalData) {
+
+                iterateSceneR(pthis.scene, function (object) {
+                    if (object instanceof RC.ZSplines) {
+                        object.visible = true;
+                    }
+                });
+
+            },
             // Target
             RenderPass.TEXTURE,
             // Viewport
@@ -531,6 +779,396 @@ export class RendeQuTor
             };
 
         this.queue.pushRenderPass(this.RP_SSAA_Super);
+    }
+
+    make_RP_Splines_IOR()
+    {
+        this.RP_Splines_Color_Mask_mat = new RC.CustomShaderMaterial("colorMasking"); 
+
+        this.RP_Splines_Normal_Mask_mat = new RC.CustomShaderMaterial("normalMasking"); 
+
+        let pthis = this;
+
+        this.RP_Splines_Color_Mask = new RenderPass(
+            // Rendering pass type
+            RenderPass.POSTPROCESS,
+
+            // Initialize function
+            function (textureMap, additionalData) {
+            },
+
+            // Preprocess function
+            function (textureMap, additionalData) {
+                return {
+                    material: pthis.RP_Splines_Color_Mask_mat,
+                    textures: [
+                        textureMap[this.mask0],
+                        textureMap[this.mask1],
+                        textureMap[this.mask2],
+
+                        textureMap[this.color_cluster0],
+                        textureMap[this.color_cluster1],
+                        textureMap[this.color_cluster2],
+
+                        textureMap[this.position_cluster0],
+                        textureMap[this.position_cluster1],
+                        textureMap[this.position_cluster2],
+
+                        textureMap[this.depth_cluster0],
+                        textureMap[this.depth_cluster1],
+                        textureMap[this.depth_cluster2],
+
+
+                    ]
+                };
+            },
+
+            function (textureMap, additionalData) {
+            },
+
+            // Target
+            RenderPass.TEXTURE,
+
+            // Viewport
+            null,
+
+            // Bind depth texture to this ID
+            null,
+
+            [
+                { id: "color_masked", textureConfig: RenderPass.DEFAULT_RGBA16F_TEXTURE_CONFIG },
+                { id: "position_masked", textureConfig: RenderPass.DEFAULT_RGBA16F_TEXTURE_CONFIG },
+                { id: "depth_masked", textureConfig: RenderPass.DEFAULT_RGBA16F_TEXTURE_CONFIG },
+
+            ]
+        );
+        this.RP_Splines_Color_Mask.view_setup = function (vport) {
+            this.viewport = { width: vport.width, height: vport.height };
+           };
+        this.queue.pushRenderPass(this.RP_Splines_Color_Mask);
+
+        
+        this.RP_Splines_Normal_Mask = new RenderPass(
+            // Rendering pass type
+            RenderPass.POSTPROCESS,
+
+            // Initialize function
+            function (textureMap, additionalData) {
+            },
+
+            // Preprocess function
+            function (textureMap, additionalData) {
+                return {
+                    material: pthis.RP_Splines_Normal_Mask_mat,
+                    textures: [
+                        textureMap[this.mask0],
+                        textureMap[this.mask1],
+                        textureMap[this.mask2],
+
+                        textureMap[this.normal_cluster0],
+                        textureMap[this.normal_cluster1],
+                        textureMap[this.normal_cluster2],
+
+                        textureMap[this.normalTheta_cluster0],
+                        textureMap[this.normalTheta_cluster1],
+                        textureMap[this.normalTheta_cluster2],
+
+                        textureMap[this.binormal_cluster0],
+                        textureMap[this.binormal_cluster1],
+                        textureMap[this.binormal_cluster2],
+
+                    ]
+                };
+            },
+
+            function (textureMap, additionalData) {
+            },
+
+            // Target
+            RenderPass.TEXTURE,
+
+            // Viewport
+            null,
+
+            // Bind depth texture to this ID
+            null,
+
+            [
+                { id: "normal_masked", textureConfig: RenderPass.DEFAULT_RGBA16F_TEXTURE_CONFIG },
+                { id: "normalTheta_masked", textureConfig: RenderPass.DEFAULT_RGBA16F_TEXTURE_CONFIG },
+                { id: "binormal_masked", textureConfig: RenderPass.DEFAULT_RGBA16F_TEXTURE_CONFIG }
+
+            ]
+        );
+        this.RP_Splines_Normal_Mask.view_setup = function (vport) {
+            this.viewport = { width: vport.width, height: vport.height };
+           };
+        this.queue.pushRenderPass(this.RP_Splines_Normal_Mask);
+    }
+
+
+    make_RP_Splines() {
+
+        this.RP_Splines_Lighting_mat = new RC.CustomShaderMaterial("ZSplinesLighting");
+        this.RP_Splines_Lighting_mat.lights = false;
+        this.RP_Splines_Lighting_mat.setUniform("light_ambient", true);
+        this.RP_Splines_Lighting_mat.setUniform("light_diffuse", true);
+        this.RP_Splines_Lighting_mat.setUniform("light_specular", true);
+        this.RP_Splines_Lighting_mat.setUniform("ambientOcc", true);
+
+        let pthis = this;
+
+        this.RP_Splines = new RenderPass(
+            // Rendering pass type
+            RenderPass.BASIC,
+            // Initialize function
+            function (textureMap, additionalData) { },
+            // Preprocess function
+            function (textureMap, additionalData) {
+
+                iterateSceneR(pthis.scene, function(object){
+                    if (object instanceof RC.ZSplines ){
+                        if (object.masked && object.importance == pthis.cluster)
+                        {
+                            object.visible = true;
+                            object.material.setUniform("imp_check", true);
+                            object.material.setUniform("imp_id", object.importance);   
+                        }
+                        else if(pthis.cluster == -1){
+                            object.visible = true;
+                            object.material.setUniform("imp_check", false);
+                            object.material.setUniform("imp_id", 2.0);
+                        }
+                        else{
+                            object.visible = false;
+                        }
+                        
+                    }         
+                });
+
+                return { scene: pthis.scene, camera: pthis.camera };
+            },
+
+            // Postprocess
+            function (textureMap, additionalData) { 
+
+                iterateSceneR(pthis.scene, function(object){
+                    if (! object instanceof RC.ZSplines ){
+                        object.visible = true;
+                    }
+                });
+            },
+            // Target
+            RenderPass.TEXTURE,
+            // Viewport
+            null,
+            // Bind depth texture to this ID
+            "depth_Splines",
+            [
+                { id: "position_Splines", textureConfig: RenderPass.DEFAULT_RGBA16F_TEXTURE_CONFIG},
+                { id: "normal_Splines", textureConfig: RenderPass.DEFAULT_RGBA16F_TEXTURE_CONFIG },
+                { id: "normalTheta_Splines", textureConfig: RenderPass.DEFAULT_RGBA16F_TEXTURE_CONFIG},
+                { id: "binormal_Splines", textureConfig: RenderPass.DEFAULT_RGBA16F_TEXTURE_CONFIG},
+                { id: "color_Splines", textureConfig: RenderPass.DEFAULT_RGBA16F_TEXTURE_CONFIG},
+                { id: "viewDir_Splines", textureConfig: RenderPass.DEFAULT_RGBA16F_TEXTURE_CONFIG},
+                { id: "imp_tex_Splines", textureConfig: RenderPass.DEFAULT_RGBA16F_TEXTURE_CONFIG},
+
+            ]
+        );
+        this.RP_Splines.view_setup = function (vport) {
+            this.viewport = { width: vport.width, height: vport.height };
+           };
+        this.queue.pushRenderPass(this.RP_Splines);
+
+
+
+        this.RP_Splines_Lighting = new RenderPass(
+            // Rendering pass type
+            RenderPass.POSTPROCESS,
+
+            // Initialize function
+            function (textureMap, additionalData) { },
+
+            // Preprocess function
+            function (textureMap, additionalData) {
+                return {
+                    material: pthis.RP_Splines_Lighting_mat,
+                    textures: [
+                        textureMap[this.position_splines_lighting],
+                        textureMap[this.normalTheta_splines_lighting],
+                        textureMap[this.binormal_splines_lighting],
+                        textureMap[this.color_splines_lighting],
+                        textureMap[this.SSAO_splines_lighting],
+                    ]
+                };
+            },
+
+            function (textureMap, additionalData) { },
+
+            // Target
+            RenderPass.TEXTURE,
+
+            // Viewport
+            null,
+
+            // Bind depth texture to this ID
+            'depthDefaultMaterials',
+
+            [ // clearColorArray: this.clear_zero_f32arr 
+                { id: "showerColor", textureConfig: RenderPass.DEFAULT_RGBA16F_TEXTURE_CONFIG},
+            ]
+        );
+        this.RP_Splines_Lighting.view_setup = function (vport) {
+            this.viewport = { width: vport.width, height: vport.height };
+           };
+        this.queue.pushRenderPass(this.RP_Splines_Lighting);
+    }
+
+
+    generateSamples(numberOfSamples) {
+        const ssaoSamples = [];
+
+        for (let i = 0; i < numberOfSamples; ++i) {
+            const sample = new Vector3(
+                Math.random() * 2.0 - 1.0,
+                Math.random() * 2.0 - 1.0,
+                Math.random()
+            ).normalize();
+
+            const rand = Math.random();
+            sample.multiplyScalar(rand);
+
+
+            let scale = i / numberOfSamples;
+            scale = _Math.lerp(0.1, 1.0, scale * scale);
+            sample.multiplyScalar(scale);
+
+            ssaoSamples.push(sample.x, sample.y, sample.z);
+        }
+
+        return ssaoSamples;
+    }
+
+    generateNoise(numberOfNoise) {
+        const ssaoNoise = [];
+
+        for (let i = 0; i < numberOfNoise; ++i) {
+            const noise = new Vector3(
+                Math.random() * 2.0 - 1.0,
+                Math.random() * 2.0 - 1.0,
+                0.0
+            ).normalize();
+
+            ssaoNoise.push(noise.x, noise.y, noise.z);
+        }
+
+        return ssaoNoise;
+    }
+
+    make_RP_SSAO()
+    {   
+         
+        this.RP_SSAO_mat = new CustomShaderMaterial("SSAO",
+        {
+            radius: 0.6,
+            bias: 0.005,
+            magnitude: 1.0,
+            contrast: 1.2,
+            "samples[0]": this.generateSamples(8),
+            "noise[0]": this.generateNoise(4),
+            PMat_o: this.camera.projectionMatrix.elements
+        });
+
+        this.RP_SSAO_mat.addSBValue("NUM_SAMPLES", 8);
+        this.RP_SSAO_mat.addSBValue("NUM_NOISE", 4);
+
+        this.RP_SSAO_mat.lights = false;
+        this.RP_SSAO_mat.depthTest = true;
+
+        let pthis = this;
+
+        this.RP_SSAO = new RenderPass(
+            // Rendering pass type
+            RenderPass.POSTPROCESS,
+            // Initialize function
+            function (textureMap, additionalData) { },
+            // Preprocess function
+            function (textureMap, additionalData) {
+                //console.log("Projection Matrix:", pthis.camera.projectionMatrix.elements);
+                return {
+                    material: pthis.RP_SSAO_mat,
+                    textures: [
+                        textureMap[this.position_SSAO],
+                        textureMap[this.normal_SSAO]
+                    ]
+                };
+            },
+
+            // Postprocess
+            function (textureMap, additionalData) { },
+            // Target
+            RenderPass.TEXTURE,
+            // Viewport
+            null,
+            // Bind depth texture to this ID
+            null,
+            [
+                { id: "SSAO_out", textureConfig: RenderPass.DEFAULT_RGBA16F_TEXTURE_CONFIG}
+            ]
+        );
+
+        this.RP_SSAO.view_setup = function (vport) {
+            this.viewport = { width: vport.width, height: vport.height };
+           };
+        this.queue.pushRenderPass(this.RP_SSAO);
+
+    }
+
+    make_RP_blur()
+    {
+        this.RP_SimpleBlur_mat = new CustomShaderMaterial("simpleBlur");
+
+        let pthis = this;
+
+        this.RP_SimpleBlur = new RenderPass(
+            // Rendering pass type
+            RenderPass.POSTPROCESS,
+
+            // Initialize function
+            function (textureMap, additionalData) {
+            },
+
+            // Preprocess function
+            function (textureMap, additionalData) {
+                return {
+                    material: pthis.RP_SimpleBlur_mat,
+                    textures: [
+                        textureMap[this.in_tex_blur]
+                    ]
+                };
+            },
+
+            function (textureMap, additionalData) {
+            },
+
+            // Target
+            RenderPass.TEXTURE,
+
+            // Viewport
+            null,
+
+            // Bind depth texture to this ID
+            null,
+
+            [
+                { id: "SSAO_blur", textureConfig: RenderPass.DEFAULT_RGBA16F_TEXTURE_CONFIG }
+            ]
+        );
+
+        this.RP_SimpleBlur.view_setup = function (vport) {
+            this.viewport = { width: vport.width, height: vport.height };
+           };
+        this.queue.pushRenderPass(this.RP_SimpleBlur);
     }
 
     make_RP_SSAA_Down()
@@ -738,6 +1376,161 @@ export class RendeQuTor
 
         // TODO: No push, GBuffer/Outline passes should be handled separately as there can be more of them.
         this.queue.pushRenderPass(this.RP_Outline);
+    }
+    
+    gaussianKernel(radius, sigma) {
+        //const radius = parseInt(radiusInput.value);
+        //const sigma = parseFloat(sigmaInput.value);
+
+        function erf(x) {
+            // constants
+            var a1 =  0.254829592;
+            var a2 = -0.284496736;
+            var a3 =  1.421413741;
+            var a4 = -1.453152027;
+            var a5 =  1.061405429;
+            var p  =  0.3275911;
+        
+            // Save the sign of x
+            var sign = 1;
+            if (x < 0) {
+                sign = -1;
+            }
+            x = Math.abs(x);
+        
+            // A&S formula 7.1.26
+            var t = 1.0/(1.0 + p*x);
+            var y = 1.0 - (((((a5*t + a4)*t) + a3)*t + a2)*t + a1)*t*Math.exp(-x*x);
+        
+            return sign*y;
+        }
+
+        const linear = false;
+        const correction = true;
+
+        if (sigma == 0.0) return;
+
+        var weights = [];
+        let sumWeights = 0.0;
+        for (let i = -radius; i <= radius; i++) {
+            let w = 0;
+            if (correction) {
+                w = (erf((i + 0.5) / sigma / Math.sqrt(2)) - erf((i - 0.5) / sigma / Math.sqrt(2))) / 2;
+            }
+            else {
+                w = Math.exp(- i * i / sigma / sigma);
+            }
+            sumWeights += w;
+            weights.push(w);
+        }
+
+        for (let i in weights)
+            weights[i] /= sumWeights;
+
+        var offsets = [];
+        var newWeights = [];
+
+        let hasZeros = false;
+
+        if (linear) {
+            for (let i = -radius; i <= radius; i += 2) {
+                if (i == radius) {
+                    offsets.push(i);
+                    newWeights.push(weights[i + radius]);
+                }
+                else {
+                    const w0 = weights[i + radius + 0];
+                    const w1 = weights[i + radius + 1];
+
+                    const w = w0 + w1;
+                    if (w > 0) {
+                        offsets.push(i + w1 / w);
+                    }
+                    else {
+                        hasZeros = true;
+                        offsets.push(i);
+                    }
+                    newWeights.push(w);
+                }
+            }
+        }
+        else {
+            for (let i = -radius; i <= radius; i++) {
+                offsets.push(i);
+            }
+
+            for (let w of weights)
+                if (w == 0.0)
+                    hasZeros = true;
+
+            newWeights = weights;
+        }
+
+        return [offsets.slice(radius, offsets.length), newWeights.slice(radius, offsets.length)];
+        /*
+            if (hasZeros)
+                warningDiv.innerHTML = "Some weights are equal to zero; try using a smaller radius or a bigger sigma";
+            else
+                warningDiv.innerHTML = "<br>";
+        */
+
+    }
+
+    make_RP_GaussHV()
+    {
+        let pthis = this;
+
+        this.RP_GaussH_Splines_mat = new CustomShaderMaterial("gaussBlur", {horizontal: true, power: 1.5});
+
+        const [offset_gaussian, weight_gaussian] = this.gaussianKernel(3, 1);
+
+        this.RP_GaussH_Splines_mat.addSBValue("RADIUS", 4);
+        this.RP_GaussH_Splines_mat.setUniform("offset[0]", offset_gaussian);
+        this.RP_GaussH_Splines_mat.setUniform("weight[0]", weight_gaussian);
+
+
+        this.RP_GaussH_Splines = new RenderPass(
+            RenderPass.POSTPROCESS,
+            function(textureMap, additionalData) {},
+            function(textureMap, additionalData) {
+                return {material: pthis.RP_GaussH_Splines_mat, textures: [textureMap[this.intex]]};
+            },
+            function(textureMap, additionalData) {},
+            RenderPass.TEXTURE,
+            null,
+            null,
+            [
+                {id: "gauss_h", textureConfig: RenderPass.DEFAULT_RGBA16F_TEXTURE_CONFIG}
+            ]
+        );
+        this.RP_GaussH_Splines.view_setup = function (vport) { this.viewport = vport; };
+
+        this.RP_GaussV_Splines_mat = new CustomShaderMaterial("gaussBlur", {horizontal: false, power: 1.5});
+
+        this.RP_GaussV_Splines_mat.addSBValue("RADIUS", 4);
+        this.RP_GaussV_Splines_mat.setUniform("offset[0]", offset_gaussian);
+        this.RP_GaussV_Splines_mat.setUniform("weight[0]", weight_gaussian);
+
+
+        this.RP_GaussV_Splines = new RenderPass(
+            RenderPass.POSTPROCESS,
+            function(textureMap, additionalData) {},
+            function(textureMap, additionalData) {
+                return {material: pthis.RP_GaussV_Splines_mat, textures: [textureMap[this.intex]]};
+            },
+            function(textureMap, additionalData) {},
+            RenderPass.TEXTURE,
+            null,
+            null,
+            [
+                {id: "gauss_hv", textureConfig: RenderPass.DEFAULT_RGBA16F_TEXTURE_CONFIG}
+            ]
+        );
+        this.RP_GaussV_Splines.view_setup = function (vport) { this.viewport = vport; };
+
+        this.queue.pushRenderPass(this.RP_GaussH_Splines);
+        this.queue.pushRenderPass(this.RP_GaussV_Splines);
+
     }
 
     make_RP_GaussHVandBlend()

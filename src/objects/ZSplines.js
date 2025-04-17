@@ -71,6 +71,14 @@ export class ZSplines extends Mesh {
         material.setUniform("limitT_max", limitT_max);
         material.setUniform("width", width);
         material.addSBFlag('INSTANCED');
+        material.setUniform("cluster_color", [1.0, 0.0, 0.0]);
+
+        switch(trackImportance[0])
+        {
+            case 0: material.setUniform("cluster_color", [1.0, 0.0, 0.0]); break;
+            case 1: material.setUniform("cluster_color", [0.0, 1.0, 0.0]); break;
+            case 2: material.setUniform("cluster_color", [0.0, 0.0, 1.0]); break;
+        }
 
         for (let i = 0; i < numSegments; ++i) {
             const offset = i * 12;

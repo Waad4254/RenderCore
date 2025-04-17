@@ -35,8 +35,8 @@ uniform vec3[##NUM_NOISE] noise;
     in vec2 fragUV;
 #fi
 
-//out vec4 color;
-out float color;
+out vec4 color;
+//out float color;
 
 
 //MAIN
@@ -98,7 +98,7 @@ void main() {
         occlusion  = contrast * (occlusion - 0.5) + 0.5;
 
 
-        //color = vec4(vec3(occlusion), 1.0);
-        color = occlusion;
+        color = vec4(vec3(occlusion), texture(material.texture0, fragUV).a);
+        //color = occlusion;
 	#fi
 }
