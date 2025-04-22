@@ -242,6 +242,14 @@ export class RendeQuTor {
         let tex_normal_Splines_final = this.pop_std_texture();
         let tex_binormal_Splines_final = this.pop_std_texture();
         let tex_color_Splines_final = this.pop_std_texture();
+
+        let tex_depth_Splines_final2 = this.pop_std_texture();
+        let tex_position_Splines_final2 = this.pop_std_texture();
+        let tex_normalTheta_Splines_final2 = this.pop_std_texture();
+        let tex_normal_Splines_final2 = this.pop_std_texture();
+        let tex_binormal_Splines_final2 = this.pop_std_texture();
+        let tex_color_Splines_final2 = this.pop_std_texture();
+
         let tex_gaussian = this.pop_std_texture();
 
 
@@ -321,12 +329,56 @@ export class RendeQuTor {
         this.RP_Splines_Normal_Mask.outTextures[0].id = tex_normal_Splines_final;
         this.RP_Splines_Normal_Mask.outTextures[1].id = tex_normalTheta_Splines_final;
         this.RP_Splines_Normal_Mask.outTextures[2].id = tex_binormal_Splines_final;
+        this.RP_Splines_Normal_Mask_mat.setUniform("pass", 1);
+        this.queue.render_pass(this.RP_Splines_Normal_Mask, "Splines Masking 2");
 
+        this.RP_Splines_Color_Mask.mask0 = tex_color_Splines_final;
+        this.RP_Splines_Color_Mask.mask1 = tex_mask_Splines_final[3];
+        this.RP_Splines_Color_Mask.mask2 = tex_mask_Splines_final[4]
+
+        this.RP_Splines_Color_Mask.color_cluster0 = tex_color_Splines_final;
+        this.RP_Splines_Color_Mask.color_cluster1 = tex_color_Splines[3];
+        this.RP_Splines_Color_Mask.color_cluster2 = tex_color_Splines[4];
+
+        this.RP_Splines_Color_Mask.position_cluster0 = tex_position_Splines_final;
+        this.RP_Splines_Color_Mask.position_cluster1 = tex_position_Splines[3];
+        this.RP_Splines_Color_Mask.position_cluster2 = tex_position_Splines[4];
+
+        this.RP_Splines_Color_Mask.depth_cluster0 = tex_depth_Splines_final;
+        this.RP_Splines_Color_Mask.depth_cluster1 = tex_depth_Splines[3];
+        this.RP_Splines_Color_Mask.depth_cluster2 = tex_depth_Splines[4];
+
+        this.RP_Splines_Color_Mask.outTextures[0].id = tex_color_Splines_final2;
+        this.RP_Splines_Color_Mask.outTextures[1].id = tex_position_Splines_final2;
+        this.RP_Splines_Color_Mask.outTextures[2].id = tex_depth_Splines_final2;
+
+        this.queue.render_pass(this.RP_Splines_Color_Mask, "Splines Masking 1");
+
+        this.RP_Splines_Normal_Mask.mask0 = tex_color_Splines_final; 
+        this.RP_Splines_Normal_Mask.mask1 = tex_mask_Splines[3];
+        this.RP_Splines_Normal_Mask.mask2 = tex_mask_Splines[4];
+
+        this.RP_Splines_Normal_Mask.normal_cluster0 = tex_normal_Splines_final;
+        this.RP_Splines_Normal_Mask.normal_cluster1 = tex_normal_Splines[3];
+        this.RP_Splines_Normal_Mask.normal_cluster2 = tex_normal_Splines[4];
+
+        this.RP_Splines_Normal_Mask.normalTheta_cluster0 = tex_normalTheta_Splines_final;
+        this.RP_Splines_Normal_Mask.normalTheta_cluster1 = tex_normalTheta_Splines[3];
+        this.RP_Splines_Normal_Mask.normalTheta_cluster2 = tex_normalTheta_Splines[4];
+
+        this.RP_Splines_Normal_Mask.binormal_cluster0 = tex_binormal_Splines_final;
+        this.RP_Splines_Normal_Mask.binormal_cluster1 = tex_binormal_Splines[3];
+        this.RP_Splines_Normal_Mask.binormal_cluster2 = tex_binormal_Splines[4];
+
+        this.RP_Splines_Normal_Mask.outTextures[0].id = tex_normal_Splines_final2;
+        this.RP_Splines_Normal_Mask.outTextures[1].id = tex_normalTheta_Splines_final2;
+        this.RP_Splines_Normal_Mask.outTextures[2].id = tex_binormal_Splines_final2;
+        this.RP_Splines_Normal_Mask_mat.setUniform("pass", 2);
         this.queue.render_pass(this.RP_Splines_Normal_Mask, "Splines Masking 2");
 
 
-        this.RP_SSAO.position_SSAO = tex_position_Splines_final;
-        this.RP_SSAO.normal_SSAO = tex_normal_Splines_final;
+        this.RP_SSAO.position_SSAO = tex_position_Splines_final2;
+        this.RP_SSAO.normal_SSAO = tex_normal_Splines_final2;
 
         let tex_ssao = this.pop_std_texture();
         this.RP_SSAO.outTextures[0].id = tex_ssao;
@@ -340,10 +392,10 @@ export class RendeQuTor {
 
       
         let tex_splines_light = this.pop_std_texture();
-        this.RP_Splines_Lighting.position_splines_lighting = tex_position_Splines_final;
-        this.RP_Splines_Lighting.normalTheta_splines_lighting = tex_normalTheta_Splines_final;
-        this.RP_Splines_Lighting.binormal_splines_lighting = tex_binormal_Splines_final;
-        this.RP_Splines_Lighting.color_splines_lighting = tex_color_Splines_final;
+        this.RP_Splines_Lighting.position_splines_lighting = tex_position_Splines_final2;
+        this.RP_Splines_Lighting.normalTheta_splines_lighting = tex_normalTheta_Splines_final2;
+        this.RP_Splines_Lighting.binormal_splines_lighting = tex_binormal_Splines_final2;
+        this.RP_Splines_Lighting.color_splines_lighting = tex_color_Splines_final2;
         this.RP_Splines_Lighting.SSAO_splines_lighting = tex_ssao_blur;
         
         this.RP_Splines_Lighting.outTextures[0].id = tex_splines_light;

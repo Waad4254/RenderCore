@@ -75,9 +75,11 @@ export class ZSplines extends Mesh {
 
         switch(trackImportance[0])
         {
-            case 0: material.setUniform("cluster_color", [1.0, 0.0, 0.0]); break;
-            case 1: material.setUniform("cluster_color", [0.0, 1.0, 0.0]); break;
-            case 2: material.setUniform("cluster_color", [0.0, 0.0, 1.0]); break;
+            case 0: material.setUniform("cluster_color", [0.835, 0.243, 0.310]); break; // Red-pink
+            case 1: material.setUniform("cluster_color", [0.992, 0.705, 0.384]); break; // Orange
+            case 2: material.setUniform("cluster_color", [0.580, 0.823, 0.310]); break; // Green
+            case 3: material.setUniform("cluster_color", [0.129, 0.588, 0.953]); break; // Blue
+            case 4: material.setUniform("cluster_color", [0.596, 0.388, 0.710]); break; // Purple
         }
 
         for (let i = 0; i < numSegments; ++i) {

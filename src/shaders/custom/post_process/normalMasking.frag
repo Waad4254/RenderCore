@@ -26,6 +26,7 @@ struct Material {
 
 
 uniform Material material;
+uniform int pass;
 
 #if (TEXTURE)
     in vec2 fragUV;
@@ -59,9 +60,13 @@ void main() {
         vec4 binormal_m = texture(material.texture10, fragUV).rgba;
         vec4 binormal_l = texture(material.texture11, fragUV).rgba;
 
-        float mask_h_alpha = mask_h.a;
-        float mask_m_alpha = mask_m.a * (1.0 - mask_h.a);
-        float mask_l_alpha = mask_l.a * (1.0 - mask_m.a) * (1.0 - mask_h.a);
+        float maskH = step(0.5, mask_h.a);
+        float maskM = step(0.5, mask_m.a);
+        float maskL = step(0.5, mask_l.a);
+
+        float mask_h_alpha = maskH;
+        float mask_m_alpha = maskM * (1.0 - maskH);
+        float mask_l_alpha = maskL * (1.0 - maskM) * (1.0 - maskH);
 
         vec3 normal_h_filtered = normal_h.rgb * mask_h_alpha;
         vec3 normal_m_filtered = normal_m.rgb * mask_m_alpha;
@@ -76,7 +81,7 @@ void main() {
         vec3 binormal_l_filtered = binormal_l.rgb * mask_l_alpha;
 
         normal_blended = vec4(normal_h_filtered.rgb + normal_m_filtered.rgb + normal_l_filtered.rgb, 1.0);
-
+        
         normalTheta_blended = vec4(normalTheta_h_filtered.rgb + normalTheta_m_filtered.rgb + normalTheta_l_filtered.rgb, 1.0);
 
         binormal_blended = vec4(binormal_h_filtered.rgb + binormal_m_filtered.rgb + binormal_l_filtered.rgb, 1.0);

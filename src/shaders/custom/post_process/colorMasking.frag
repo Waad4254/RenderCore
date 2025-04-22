@@ -70,14 +70,13 @@ void main() {
         mask_m_alpha /= total;
         mask_l_alpha /= total;
 
-        vec3 color_h_filtered = mask_h.rgb;
-        vec3 color_m_filtered = mask_m.rgb * mask_m_alpha;
-        vec3 color_l_filtered = mask_l.rgb * mask_l_alpha;
+        vec3 color_h_filtered = color_h.rgb;
+        vec3 color_m_filtered = color_m.rgb * mask_m_alpha;
+        vec3 color_l_filtered = color_l.rgb * mask_l_alpha;
 
-
-        float maskH = color_h.a;
-        float maskM = color_m.a;
-        float maskL = color_l.a;
+        float maskH = step(0.5, color_h.a);
+        float maskM = step(0.5, color_m.a);
+        float maskL = step(0.5, color_l.a);
 
         vec3 position_h_filtered = position_h.rgb * maskH;
         vec3 position_m_filtered = position_m.rgb * position_m.a * (1.0 - maskH);
