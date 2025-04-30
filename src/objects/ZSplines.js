@@ -433,15 +433,55 @@ export class ZSplines extends Mesh {
 
 
     static getCurveFunctionCoefficients(positionA, tangentA, positionB, tangentB) {
+        // Function to normalize a vector
+        function normalize(tangent) {
+            const magnitude = Math.sqrt(tangent[0] * tangent[0] + tangent[1] * tangent[1] + tangent[2] * tangent[2]);
+            if (magnitude > 0) {
+                return [
+                    tangent[0] / magnitude,
+                    tangent[1] / magnitude,
+                    tangent[2] / magnitude
+                ];
+            }
+            return tangent;  // Return the original tangent if magnitude is zero
+        }
+    
+        // Function to check if tangents are the same (for straight line condition)
+        function areTangentsEqual(tangentA, tangentB, tolerance = 1e-6) {
+            return Math.abs(tangentA[0] - tangentB[0]) < tolerance &&
+                   Math.abs(tangentA[1] - tangentB[1]) < tolerance &&
+                   Math.abs(tangentA[2] - tangentB[2]) < tolerance;
+        }
+    
 
-        const d = Math.sqrt(Math.pow(positionA[0] - positionB[0], 2) + Math.pow(positionA[1] - positionB[1], 2) + Math.pow(positionA[2] - positionB[2], 2));
-
-        const tension = 1;
-        const tension2 = 1;
+    
+        // Calculate the distance between positions
+        const d = Math.sqrt(Math.pow(positionA[0] - positionB[0], 2) +
+                            Math.pow(positionA[1] - positionB[1], 2) +
+                            Math.pow(positionA[2] - positionB[2], 2));
+    
+        // Apply tension
+        const tension = 1.0;
+        const tension2 = 1.0;
         const T1 = tension * d, T2 = tension2 * d;
-
+    
+        //console.log("areTangentsEqual before"); 710
+        // If the tangents are equal, return straight line coefficients
+        if (areTangentsEqual(tangentA, tangentB)) {
+            // console.log("areTangentsEqual"); 640
+            const coefficientsMat = [];
+            for (let i = 0; i < 3; ++i) {
+                coefficientsMat[i] = [positionA[i], 0, 0, 0]; // Straight line (no curvature)
+            }
+            return coefficientsMat;
+        }
+        console.log("areTangentsEqual after", tangentA, tangentB); 
+    
+        // Normalize the tangents 
+                tangentA = normalize(tangentA);
+                tangentB = normalize(tangentB);
+        // Otherwise, calculate the spline curve coefficients
         const coefficientsMat = [];
-
         for (let i = 0; i < 3; ++i) {
             const P = positionB[i] - positionA[i];
             const Q = T1 * tangentA[i];
